@@ -7,6 +7,7 @@ public class TerrainInfo : MonoBehaviour
 {
     [SerializeField] private Terrain terrain;
     [SerializeField] private int samplesPerSide = 40;
+    [SerializeField] private GameObject voxelCube;
 
     private void OnValidate()
     {
