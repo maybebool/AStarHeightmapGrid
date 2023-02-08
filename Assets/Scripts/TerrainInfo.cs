@@ -2,17 +2,76 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Terrain))]
 public class TerrainInfo : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private Terrain terrain;
+    [SerializeField] private int samplesPerSide = 40;
+
+    private void OnValidate()
     {
-        
+        if (terrain == null)
+        {
+            terrain = GetComponent<Terrain>();
+        }
+
+        samplesPerSide = Mathf.ClosestPowerOfTwo(samplesPerSide);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
+    {
+        SpawnDebugCubes(SampleHeights(samplesPerSide));
+    }
+
+    public float[,] SampleHeights(int samplesPerDimension, bool inWorldUnits = true)
+    {
+      var terrainResolution = terrain.terrainData.heightmapResolution;
+      var sampleStepSize = terrainResolution / samplesPerDimension;
+      var heights = terrain.terrainData.GetHeights(0, 0, terrainResolution, terrainResolution);
+      var returnHeights = new float[samplesPerDimension, samplesPerDimension];
+      
+      for (int currentSampleY = 0; currentSampleY < samplesPerDimension; currentSampleY++)
+      {
+          for (int currentSampleX = 0; currentSampleX < samplesPerDimension; currentSampleX++)
+          {
+              float maxHeight = 0;
+              for (int y = 0; y <= sampleStepSize; y++)
+              {
+                  for (int x = 0; x <= sampleStepSize; x++)
+                  {
+                      // current origin of the sample
+                      // + x / y
+                      // get height of this position, if its higher than previously saved value store it.
+                      var yPos = currentSampleY * sampleStepSize + y;
+                      var xPos = currentSampleX * sampleStepSize + x;
+                      
+                      if (heights[xPos, yPos] > maxHeight) {
+                          maxHeight = heights[xPos,yPos];
+                      }
+                  }
+              }
+              returnHeights[currentSampleY, currentSampleX] = inWorldUnits ? maxHeight * terrain.terrainData.heightmapScale.y : maxHeight;
+          }
+      }
+      return returnHeights;
+    }
+
+    public void SpawnDebugCubes(float[,] heights)
     {
         
+        for (int y = 0; y < heights.GetLength(1); y++)
+        {
+            for (int x = 0; x < heights.GetLength(0); x++)
+            {
+                // terrain position in Ws + width or length / heights, length + width / heigths.length / 2
+                var sampleLength = terrain.terrainData.size.x / heights.GetLength(0);
+                var sampleHalfLength = sampleLength / 2f;
+                var cubeSpawnPosition = terrain.transform.position + new Vector3(
+                    x * sampleLength + sampleHalfLength, heights[x, y] / 2f, y * sampleLength + sampleHalfLength);
+                var spawnedCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                spawnedCube.transform.position = cubeSpawnPosition;
+                spawnedCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
+            }
+        }
     }
 }
