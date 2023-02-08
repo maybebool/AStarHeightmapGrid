@@ -2,17 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PathNode : MonoBehaviour
+public class PathNode
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public Vector2Int Index;
+    // /// <summary>
+    // /// X Pos in world space (Unity.Units)
+    // /// </summary>
+    // public float X;
+    // /// <summary>
+    // /// Y Pos in world space (Unity.Units)
+    // /// </summary>
+    // public float Y;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public float GCost { get; set; }  // Distance from current node to start node (Path length)
+    public float HCost { get; set; }  // Heuristic (estimated Distance from current to end) 
+    public float FCost { get => GCost + HCost + FlyCost; }  // Total cost
+    public float FlyCost { get; set; }  // cost to fly up/down 
+
+    public PathNode(Vector2Int index) {
+        Index = index;
+        // X = x;
+        // Y = y;
+        GCost = float.MaxValue;
     }
 }
