@@ -7,7 +7,7 @@ public class TerrainInfo : MonoBehaviour
 {
     [SerializeField] private Terrain terrain;
     [SerializeField] private int samplesPerSide = 40;
-    [SerializeField] private GameObject voxelCube;
+    [SerializeField] private Transform voxelCube;
 
     private void OnValidate()
     {
@@ -69,9 +69,10 @@ public class TerrainInfo : MonoBehaviour
                 var sampleHalfLength = sampleLength / 2f;
                 var cubeSpawnPosition = terrain.transform.position + new Vector3(
                     x * sampleLength + sampleHalfLength, heights[x, y] / 2f, y * sampleLength + sampleHalfLength);
-                var spawnedCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                spawnedCube.transform.position = cubeSpawnPosition;
-                spawnedCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
+                //voxelCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Instantiate(voxelCube);
+                voxelCube.transform.position = cubeSpawnPosition;
+                voxelCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
             }
         }
     }

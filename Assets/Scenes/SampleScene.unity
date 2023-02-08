@@ -423,6 +423,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: Terrain
       objectReference: {fileID: 0}
+    - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: voxelCube
+      value: 
+      objectReference: {fileID: 5903623505502748284, guid: 085415137d8f11647ba208a859356ebe,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a80af1c8afa5a3429e10706f5cb78ef, type: 3}
 --- !u!1 &832575517
