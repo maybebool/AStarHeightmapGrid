@@ -62,7 +62,14 @@ public class TerrainInfo : MonoBehaviour
 
     public void SpawnDebugCubes(float[,] heights)
     {
-        
+        // if (spawnedCubes != null)
+        // {
+        //     foreach (var cube in spawnedCubes)
+        //     {
+        //         Destroy(cube);
+        //     }
+        // }
+        spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
         for (int y = 0; y < heights.GetLength(1); y++)
         {
             for (int x = 0; x < heights.GetLength(0); x++)
@@ -86,12 +93,12 @@ public class TerrainInfo : MonoBehaviour
     {
         foreach (var cube in spawnedCubes)
         {
-            cube.GetComponent<MeshRenderer>().material.color = color;
+            cube.GetComponent<MeshRenderer>().sharedMaterial.color = color;
         }
     }
 
     public void SetColor(Vector2Int index, Color color)
     {
-        spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material.color = color;
+        spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().sharedMaterial.color = color;
     }
 }
