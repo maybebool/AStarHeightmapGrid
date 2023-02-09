@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,9 +9,11 @@ public class TerrainInfo : MonoBehaviour
     [SerializeField] private Terrain terrain;
     [SerializeField] private int samplesPerSide = 40;
     [SerializeField] private GameObject voxelCube;
+    // [SerializeField] private Material heat;
+    // [SerializeField] private Material path;
     public int SamplesPerSide { get => samplesPerSide; }
 
-    private GameObject[,] spawnedCubes;
+    private GameObject[,] _spawnedCubes;
 
     private void OnValidate()
     {
@@ -69,7 +72,7 @@ public class TerrainInfo : MonoBehaviour
         //         Destroy(cube);
         //     }
         // }
-        spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
+        _spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
         for (int y = 0; y < heights.GetLength(1); y++)
         {
             for (int x = 0; x < heights.GetLength(0); x++)
@@ -83,7 +86,7 @@ public class TerrainInfo : MonoBehaviour
                 Instantiate(voxelCube);
                 voxelCube.transform.position = cubeSpawnPosition;
                 voxelCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
-                spawnedCubes[x, y] = voxelCube;
+                _spawnedCubes[x, y] = voxelCube;
             }
         }
     }
@@ -91,7 +94,7 @@ public class TerrainInfo : MonoBehaviour
 
     public void SetAllColor(Color color)
     {
-        foreach (var cube in spawnedCubes)
+        foreach (var cube in _spawnedCubes)
         {
             cube.GetComponent<MeshRenderer>().sharedMaterial.color = color;
         }
@@ -99,6 +102,9 @@ public class TerrainInfo : MonoBehaviour
 
     public void SetColor(Vector2Int index, Color color)
     {
-        spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().sharedMaterial.color = color;
+        
+        //spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().sharedMaterial = path;
+        _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().sharedMaterial.color = color;
+        
     }
 }
