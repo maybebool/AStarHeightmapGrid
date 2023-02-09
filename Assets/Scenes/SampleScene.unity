@@ -437,7 +437,7 @@ PrefabInstance:
         type: 3}
       propertyPath: voxelCube
       value: 
-      objectReference: {fileID: 7164912018873749393, guid: 6370d80fec54f6c4889de2458b4abb64,
+      objectReference: {fileID: 1648923295061075877, guid: 085415137d8f11647ba208a859356ebe,
         type: 3}
     - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
