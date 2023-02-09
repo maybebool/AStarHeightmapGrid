@@ -31,12 +31,20 @@ public class PathFinding : MonoBehaviour
             {
                 end = _pathGrid.GetRandomNode();
             }
+            
+            //terrainInfo.SetAllColor(Color.white);
+            
+            
 
             var path = FindPath(start, end);
             foreach (var node in path)
             {
                 Debug.Log($"Node: {node.Index}, FCost: {node.FCost}");
+                terrainInfo.SetColor(node.Index, Color.white);
             }
+            
+            terrainInfo.SetColor(start.Index, Color.blue);
+            terrainInfo.SetColor(end.Index, Color.magenta);
 
         }
     }
@@ -48,6 +56,8 @@ public class PathFinding : MonoBehaviour
             Debug.Log("No grid or terrain");
             return null;
         }
+        openNodes.Clear();
+        closedNodes.Clear();
 
         var terrainHeights = terrainInfo.SampleHeights(samplesPerDimension, false);
         start.GCost = 0;
@@ -89,12 +99,13 @@ public class PathFinding : MonoBehaviour
                         neighbour.HCost = Vector2.Distance(neighbour.Index, end.Index);
                         neighbour.SourceNode = currentNode;
                     }
+                    if (!openNodes.Contains(neighbour))
+                    {
+                        openNodes.Add(neighbour);
+                    }
                 }
 
-                if (!openNodes.Contains(neighbour))
-                {
-                    openNodes.Add(neighbour);
-                }
+                
             }
 
         }

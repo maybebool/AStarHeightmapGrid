@@ -7,8 +7,10 @@ public class TerrainInfo : MonoBehaviour
 {
     [SerializeField] private Terrain terrain;
     [SerializeField] private int samplesPerSide = 40;
-    [SerializeField] private Transform voxelCube;
+    [SerializeField] private GameObject voxelCube;
     public int SamplesPerSide { get => samplesPerSide; }
+
+    private GameObject[,] spawnedCubes;
 
     private void OnValidate()
     {
@@ -74,7 +76,22 @@ public class TerrainInfo : MonoBehaviour
                 Instantiate(voxelCube);
                 voxelCube.transform.position = cubeSpawnPosition;
                 voxelCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
+                spawnedCubes[x, y] = voxelCube;
             }
         }
+    }
+
+
+    public void SetAllColor(Color color)
+    {
+        foreach (var cube in spawnedCubes)
+        {
+            cube.GetComponent<MeshRenderer>().material.color = color;
+        }
+    }
+
+    public void SetColor(Vector2Int index, Color color)
+    {
+        spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material.color = color;
     }
 }

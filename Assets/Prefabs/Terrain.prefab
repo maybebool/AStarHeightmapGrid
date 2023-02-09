@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3860351955838244324}
   - component: {fileID: 8365740033157954444}
   - component: {fileID: 7382417861310942834}
+  - component: {fileID: 7099189764252422604}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -92,4 +93,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain: {fileID: 3860351955838244324}
-  samplesPerSide: 64
+  samplesPerSide: 16
+  voxelCube: {fileID: 5903623505502748284, guid: 085415137d8f11647ba208a859356ebe,
+    type: 3}
+--- !u!114 &7099189764252422604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7006454368882644959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a5aee6eb1144a2449e1a85caf8894b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  samplesPerDimension: 16
+  flyCostMultiplier: 1.25
+  terrainInfo: {fileID: 7382417861310942834}
