@@ -17,7 +17,11 @@ public class PathNode
     public float GCost { get; set; }  // Distance from current node to start node (Path length)
     public float HCost { get; set; }  // Heuristic (estimated Distance from current to end) 
     public float FCost { get => GCost + HCost + FlyCost; }  // Total cost
-    public float FlyCost { get; set; }  // cost to fly up/down 
+    public float FlyCost { get; set; } // cost to fly up/down 
+    
+    public bool isWall { get; set; }
+
+    public PathNode SourceNode;
 
     public PathNode(Vector2Int index) {
         Index = index;
