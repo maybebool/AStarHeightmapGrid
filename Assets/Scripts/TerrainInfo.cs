@@ -8,7 +8,7 @@ public class TerrainInfo : MonoBehaviour
 {
     [SerializeField] private Terrain terrain;
     [SerializeField] private int samplesPerSide = 40;
-    [SerializeField] private GameObject voxelCube;
+    //[SerializeField] private GameObject voxelCube;
     // [SerializeField] private Material heat;
     // [SerializeField] private Material path;
     public int SamplesPerSide { get => samplesPerSide; }
@@ -82,8 +82,8 @@ public class TerrainInfo : MonoBehaviour
                 var sampleHalfLength = sampleLength / 2f;
                 var cubeSpawnPosition = terrain.transform.position + new Vector3(
                     x * sampleLength + sampleHalfLength, heights[x, y] / 2f, y * sampleLength + sampleHalfLength);
-                //voxelCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Instantiate(voxelCube);
+                var voxelCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                //Instantiate(voxelCube);
                 voxelCube.transform.position = cubeSpawnPosition;
                 voxelCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
                 _spawnedCubes[x, y] = voxelCube;
@@ -96,7 +96,7 @@ public class TerrainInfo : MonoBehaviour
     {
         foreach (var cube in _spawnedCubes)
         {
-            cube.GetComponent<MeshRenderer>().sharedMaterial.color = color;
+            cube.GetComponent<MeshRenderer>().material.color = color;
         }
     }
 
@@ -104,7 +104,7 @@ public class TerrainInfo : MonoBehaviour
     {
         
         //spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().sharedMaterial = path;
-        _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().sharedMaterial.color = color;
+        _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material.color = color;
         
     }
 }

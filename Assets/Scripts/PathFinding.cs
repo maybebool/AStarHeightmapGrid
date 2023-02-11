@@ -32,7 +32,7 @@ public class PathFinding : MonoBehaviour
                 end = _pathGrid.GetRandomNode();
             }
             
-            //terrainInfo.SetAllColor(Color.white);
+            terrainInfo.SetAllColor(Color.black);
             
             
 
