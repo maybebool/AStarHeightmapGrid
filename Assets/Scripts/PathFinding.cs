@@ -67,7 +67,7 @@ public class PathFinding : MonoBehaviour
         openNodes.Add(start);
         while (openNodes.Count > 0)
         {
-            PathNode currentNode = GetLowestCostNode();
+            var currentNode = GetLowestCostNode();
             if (currentNode == end) // TODO: Return final path 
             {
                 return GetFinalPath(currentNode);

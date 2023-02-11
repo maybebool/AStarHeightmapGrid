@@ -10,9 +10,6 @@ public class TerrainInfo : MonoBehaviour
     [SerializeField] private int samplesPerSide = 40;
     [SerializeField] private Material heatMap;
     [SerializeField] private Material path;
-    //[SerializeField] private GameObject voxelCube;
-    // [SerializeField] private Material heat;
-    // [SerializeField] private Material path;
     public int SamplesPerSide { get => samplesPerSide; }
 
     private GameObject[,] _spawnedCubes;
