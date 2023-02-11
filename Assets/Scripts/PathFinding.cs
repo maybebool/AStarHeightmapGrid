@@ -6,8 +6,9 @@ using UnityEngine.Serialization;
 
 public class PathFinding : MonoBehaviour
 {
-    [SerializeField] private int samplesPerDimension;
+    [SerializeField] private int samplesPerDimension = 4;
     [SerializeField] private float flyCostMultiplier = 1.25f;
+    
 
     private List<PathNode> openNodes = new();
     private List<PathNode> closedNodes = new();
@@ -22,29 +23,29 @@ public class PathFinding : MonoBehaviour
 
     private void Update()
     {
+        
         if (Input.GetKeyDown(KeyCode.Space))
         {
             _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension);
             var start = _pathGrid.GetRandomNode();
             var end = _pathGrid.GetRandomNode();
-            while (start == end)
-            {
+            
+            while (start == end) {
                 end = _pathGrid.GetRandomNode();
             }
             
-            terrainInfo.SetAllColor(Color.black);
+            terrainInfo.SetHeatmap();
             
-            
-
             var path = FindPath(start, end);
-            foreach (var node in path)
-            {
+            
+            foreach (var node in path) {
                 Debug.Log($"Node: {node.Index}, FCost: {node.FCost}");
                 terrainInfo.SetColor(node.Index, Color.white);
             }
             
             terrainInfo.SetColor(start.Index, Color.blue);
             terrainInfo.SetColor(end.Index, Color.magenta);
+            path.ForEach(node => { Debug.Log($"Node: {node.Index}, FCost {node.FCost}"); });
 
         }
     }

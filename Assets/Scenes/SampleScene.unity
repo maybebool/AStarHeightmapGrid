@@ -423,6 +423,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Terrain
       objectReference: {fileID: 0}
+    - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: flyCostMultiplier
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: samplesPerDimension
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: way
+      value: 
+      objectReference: {fileID: 2100000, guid: 8a45e4f45d1f93840b3c46f8e7328c9b, type: 2}
     - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: heat
@@ -435,6 +450,11 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 8a45e4f45d1f93840b3c46f8e7328c9b, type: 2}
     - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
+      propertyPath: heatMap
+      value: 
+      objectReference: {fileID: 2100000, guid: 5b9b995b3304d9a4387d60c6290f8fac, type: 2}
+    - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
       propertyPath: voxelCube
       value: 
       objectReference: {fileID: 1648923295061075877, guid: 085415137d8f11647ba208a859356ebe,
@@ -442,7 +462,7 @@ PrefabInstance:
     - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: samplesPerSide
-      value: 16
+      value: 64
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a80af1c8afa5a3429e10706f5cb78ef, type: 3}
