@@ -6,6 +6,7 @@ using UnityEngine.Serialization;
 
 public class PathFinding : MonoBehaviour
 {
+    // check why multiplier is not working as it should
     [SerializeField] private int samplesPerDimension = 4;
     [SerializeField] private float flyCostMultiplier = 1.25f;
     

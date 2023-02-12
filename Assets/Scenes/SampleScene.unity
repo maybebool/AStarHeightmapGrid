@@ -433,6 +433,16 @@ PrefabInstance:
       propertyPath: samplesPerDimension
       value: 64
       objectReference: {fileID: 0}
+    - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: flyCostMultiplier
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: samplesPerDimension
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 7382417861310942834, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: way
