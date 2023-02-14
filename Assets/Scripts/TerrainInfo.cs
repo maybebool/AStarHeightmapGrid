@@ -14,18 +14,15 @@ public class TerrainInfo : MonoBehaviour
 
     private GameObject[,] _spawnedCubes;
 
-    private void OnValidate()
-    {
-        if (terrain == null)
-        {
+    private void OnValidate() {
+        if (terrain == null) {
             terrain = GetComponent<Terrain>();
         }
 
         samplesPerSide = Mathf.ClosestPowerOfTwo(samplesPerSide);
     }
 
-    private void Start()
-    {
+    private void Start() {
         SpawnDebugCubes(SampleHeights(samplesPerSide));
     }
 
@@ -36,15 +33,11 @@ public class TerrainInfo : MonoBehaviour
       var heights = terrain.terrainData.GetHeights(0, 0, terrainResolution, terrainResolution);
       var returnHeights = new float[samplesPerDimension, samplesPerDimension];
       
-      for (int currentSampleY = 0; currentSampleY < samplesPerDimension; currentSampleY++)
-      {
-          for (int currentSampleX = 0; currentSampleX < samplesPerDimension; currentSampleX++)
-          {
+      for (int currentSampleY = 0; currentSampleY < samplesPerDimension; currentSampleY++) {
+          for (int currentSampleX = 0; currentSampleX < samplesPerDimension; currentSampleX++) {
               float maxHeight = 0;
-              for (int y = 0; y <= sampleStepSize; y++)
-              {
-                  for (int x = 0; x <= sampleStepSize; x++)
-                  {
+              for (int y = 0; y <= sampleStepSize; y++) {
+                  for (int x = 0; x <= sampleStepSize; x++) {
                       // current origin of the sample
                       // + x / y
                       // get height of this position, if its higher than previously saved value store it.
@@ -62,14 +55,11 @@ public class TerrainInfo : MonoBehaviour
       return returnHeights;
     }
 
-    public void SpawnDebugCubes(float[,] heights)
+    public void SpawnDebugCubes(float[,] heights) 
     {
-        
         _spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
-        for (int y = 0; y < heights.GetLength(1); y++)
-        {
-            for (int x = 0; x < heights.GetLength(0); x++)
-            {
+        for (int y = 0; y < heights.GetLength(1); y++) {
+            for (int x = 0; x < heights.GetLength(0); x++) {
                 // terrain position in Ws + width or length / heights, length + width / heigths.length / 2
                 var sampleLength = terrain.terrainData.size.x / heights.GetLength(0);
                 var sampleHalfLength = sampleLength / 2f;
