@@ -4,26 +4,24 @@ using UnityEngine;
 
 public class PathFinding : MonoBehaviour
 {
+    // check why multiplier is not working as it should
     [SerializeField] private int samplesPerDimension = 4;
     [SerializeField] private float flyCostMultiplier = 1.25f;
+    [SerializeField] private TerrainInfo terrainInfo;
     
 
     private List<PathNode> openNodes = new();
     private List<PathNode> closedNodes = new();
-    [SerializeField] private TerrainInfo terrainInfo;
 
     private PathGrid _pathGrid;
 
-    private void OnValidate()
-    {
+    private void OnValidate() {
         samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
     }
 
-    private void Update()
-    {
+    private void Update() {
         
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
+        if (Input.GetKeyDown(KeyCode.Space)) {
             _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension);
             var start = _pathGrid.GetRandomNode();
             var end = _pathGrid.GetRandomNode();
@@ -47,10 +45,8 @@ public class PathFinding : MonoBehaviour
         }
     }
 
-    public List<PathNode> FindPath(PathNode start, PathNode end)
-    {
-        if (_pathGrid == null || terrainInfo == null)
-        {
+    public List<PathNode> FindPath(PathNode start, PathNode end) {
+        if (_pathGrid == null || terrainInfo == null) {
             Debug.Log("No grid or terrain");
             return null;
         }
@@ -67,24 +63,20 @@ public class PathFinding : MonoBehaviour
         while (openNodes.Count > 0)
         {
             var currentNode = GetLowestCostNode();
-            if (currentNode == end)
-            {
+            if (currentNode == end) {
                 return GetFinalPath(currentNode);
             }
 
             openNodes.Remove(currentNode);
             closedNodes.Add(currentNode);
             var neighbours = _pathGrid.GetAllNeighbours(currentNode.Index);
-            foreach (var neighbour in neighbours)
-            {
-                if (neighbour.isWall)
-                {
+            foreach (var neighbour in neighbours) {
+                if (neighbour.isWall) {
                     closedNodes.Add(neighbour);
                     continue;
                 }
 
-                if (!closedNodes.Contains(neighbour))
-                {
+                if (!closedNodes.Contains(neighbour)) {
                     var isDiagonal = currentNode.Index.x != neighbour.Index.x &&
                                      currentNode.Index.y != neighbour.Index.y;
 
@@ -92,35 +84,28 @@ public class PathFinding : MonoBehaviour
                     var flyCost = (terrainHeights[neighbour.Index.x, neighbour.Index.y] -
                                    terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier; // divide by 50 to make values less 
 
-                    if (gCost + flyCost < neighbour.GCost)
-                    {
+                    if (gCost + flyCost < neighbour.GCost) {
                         neighbour.GCost = gCost;
                         neighbour.FlyCost = flyCost;
                         neighbour.HCost = Vector2.Distance(neighbour.Index, end.Index);
                         neighbour.SourceNode = currentNode;
                     }
-                    if (!openNodes.Contains(neighbour))
-                    {
+                    if (!openNodes.Contains(neighbour)) {
                         openNodes.Add(neighbour);
                     }
                 }
-
-                
             }
-
         }
 
         Debug.Log("No path found. Make sure and end are accessible");
         return null;
     }
 
-    private List<PathNode> GetFinalPath(PathNode endNode)
-    {
+    private List<PathNode> GetFinalPath(PathNode endNode) {
         List<PathNode> finalPath = new();
         var pathNode = endNode;
         finalPath.Add(pathNode);
-        while (pathNode.SourceNode != null)
-        {
+        while (pathNode.SourceNode != null) {
             pathNode = pathNode.SourceNode;
             finalPath.Add(pathNode);
         }
@@ -129,20 +114,16 @@ public class PathFinding : MonoBehaviour
         return finalPath;
     }
 
-    private PathNode GetLowestCostNode()
-    {
+    private PathNode GetLowestCostNode() {
         var lowestCostNode = openNodes[0];
         var lowestCost = lowestCostNode.FCost;
-        foreach (var node in openNodes)
-        {
+        foreach (var node in openNodes) {
             var nodeCost = node.FCost;
-            if (node.FCost < lowestCost)
-            {
+            if (node.FCost < lowestCost) {
                 lowestCost = nodeCost;
                 lowestCostNode = node;
             }
         }
-
         return lowestCostNode;
     }
 }
