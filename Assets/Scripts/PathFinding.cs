@@ -1,8 +1,6 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
+
 
 public class PathFinding : MonoBehaviour
 {
@@ -34,7 +32,6 @@ public class PathFinding : MonoBehaviour
                 end = _pathGrid.GetRandomNode();
             }
             
-            terrainInfo.SetHeatmap();
             
             var path = FindPath(start, end);
             
@@ -59,6 +56,8 @@ public class PathFinding : MonoBehaviour
         }
         openNodes.Clear();
         closedNodes.Clear();
+        
+        
 
         var terrainHeights = terrainInfo.SampleHeights(samplesPerDimension, false);
         start.GCost = 0;
