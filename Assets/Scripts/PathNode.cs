@@ -22,6 +22,7 @@ public class PathNode
     public bool isWall { get; set; }
 
     public PathNode SourceNode;
+    public TerrainInfo terrainInfo;
 
     public PathNode(Vector2Int index) {
         Index = index;

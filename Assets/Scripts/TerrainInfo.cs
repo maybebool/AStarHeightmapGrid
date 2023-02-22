@@ -1,7 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 [RequireComponent(typeof(Terrain))]
 public class TerrainInfo : MonoBehaviour
@@ -10,9 +10,25 @@ public class TerrainInfo : MonoBehaviour
     [SerializeField] private int samplesPerSide = 40;
     [SerializeField] private Material heatMap;
     [SerializeField] private Material path;
+    [SerializeField] private Button cleanButton;
+    private TerrainInfo _terrainInfo;
     public int SamplesPerSide { get => samplesPerSide; }
 
     private GameObject[,] _spawnedCubes;
+    
+    
+    private void OnEnable() {
+        Utils.BindButtonPlusParamsAction(cleanButton, CleanButtonClick);
+    }
+
+    private void OnDisable() {
+        cleanButton.onClick.RemoveAllListeners();
+    }
+
+
+    private void CleanButtonClick() {
+        SetHeatmap();
+    }
 
     private void OnValidate() {
         if (terrain == null) {
@@ -24,6 +40,7 @@ public class TerrainInfo : MonoBehaviour
 
     private void Start() {
         SpawnDebugCubes(SampleHeights(samplesPerSide));
+        SetHeatmap();
     }
 
     public float[,] SampleHeights(int samplesPerDimension, bool inWorldUnits = true)
@@ -80,7 +97,7 @@ public class TerrainInfo : MonoBehaviour
             cube.GetComponent<MeshRenderer>().material = heatMap;
         }
     }
-
+    
     public void SetColor(Vector2Int index, Color color) {
         _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material = path;
         _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material.color = color;
