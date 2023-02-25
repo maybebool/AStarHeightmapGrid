@@ -8,10 +8,12 @@ public class PathFinding : MonoBehaviour
     [SerializeField] private int samplesPerDimension = 4;
     [SerializeField] private float flyCostMultiplier = 1.25f;
     [SerializeField] private TerrainInfo terrainInfo;
-    
+    private List<PathNode> _path = new();
+    private PathNode _start;
+    private PathNode _end;
 
-    private List<PathNode> openNodes = new();
-    private List<PathNode> closedNodes = new();
+    private List<PathNode> _openNodes = new();
+    private List<PathNode> _closedNodes = new();
 
     private PathGrid _pathGrid;
 
@@ -22,26 +24,9 @@ public class PathFinding : MonoBehaviour
     private void Update() {
         
         if (Input.GetKeyDown(KeyCode.Space)) {
-            _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension);
-            var start = _pathGrid.GetRandomNode();
-            var end = _pathGrid.GetRandomNode();
             
-            while (start == end) {
-                end = _pathGrid.GetRandomNode();
-            }
-            
-            
-            var path = FindPath(start, end);
-            
-            foreach (var node in path) {
-                Debug.Log($"Node: {node.Index}, FCost: {node.FCost}");
-                terrainInfo.SetColor(node.Index, Color.white);
-            }
-            
-            terrainInfo.SetColor(start.Index, Color.blue);
-            terrainInfo.SetColor(end.Index, Color.magenta);
-            path.ForEach(node => { Debug.Log($"Node: {node.Index}, FCost {node.FCost}"); });
-
+            RandomizePath();
+            SetColorToPath();
         }
     }
 
@@ -50,8 +35,8 @@ public class PathFinding : MonoBehaviour
             Debug.Log("No grid or terrain");
             return null;
         }
-        openNodes.Clear();
-        closedNodes.Clear();
+        _openNodes.Clear();
+        _closedNodes.Clear();
         
         
 
@@ -59,24 +44,24 @@ public class PathFinding : MonoBehaviour
         start.GCost = 0;
         start.HCost = Vector2.Distance(start.Index, end.Index);
         start.FlyCost = 0;
-        openNodes.Add(start);
-        while (openNodes.Count > 0)
+        _openNodes.Add(start);
+        while (_openNodes.Count > 0)
         {
             var currentNode = GetLowestCostNode();
             if (currentNode == end) {
                 return GetFinalPath(currentNode);
             }
 
-            openNodes.Remove(currentNode);
-            closedNodes.Add(currentNode);
+            _openNodes.Remove(currentNode);
+            _closedNodes.Add(currentNode);
             var neighbours = _pathGrid.GetAllNeighbours(currentNode.Index);
             foreach (var neighbour in neighbours) {
                 if (neighbour.isWall) {
-                    closedNodes.Add(neighbour);
+                    _closedNodes.Add(neighbour);
                     continue;
                 }
 
-                if (!closedNodes.Contains(neighbour)) {
+                if (!_closedNodes.Contains(neighbour)) {
                     var isDiagonal = currentNode.Index.x != neighbour.Index.x &&
                                      currentNode.Index.y != neighbour.Index.y;
 
@@ -90,8 +75,8 @@ public class PathFinding : MonoBehaviour
                         neighbour.HCost = Vector2.Distance(neighbour.Index, end.Index);
                         neighbour.SourceNode = currentNode;
                     }
-                    if (!openNodes.Contains(neighbour)) {
-                        openNodes.Add(neighbour);
+                    if (!_openNodes.Contains(neighbour)) {
+                        _openNodes.Add(neighbour);
                     }
                 }
             }
@@ -115,9 +100,9 @@ public class PathFinding : MonoBehaviour
     }
 
     private PathNode GetLowestCostNode() {
-        var lowestCostNode = openNodes[0];
+        var lowestCostNode = _openNodes[0];
         var lowestCost = lowestCostNode.FCost;
-        foreach (var node in openNodes) {
+        foreach (var node in _openNodes) {
             var nodeCost = node.FCost;
             if (node.FCost < lowestCost) {
                 lowestCost = nodeCost;
@@ -125,5 +110,28 @@ public class PathFinding : MonoBehaviour
             }
         }
         return lowestCostNode;
+    }
+
+
+    private void RandomizePath() {
+        _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension);
+        _start = _pathGrid.GetRandomNode();
+        _end = _pathGrid.GetRandomNode();
+            
+        while (_start == _end) {
+            _end = _pathGrid.GetRandomNode();
+        }
+    }
+
+    private void SetColorToPath() {
+        _path = FindPath(_start, _end);
+        foreach (var node in _path) {
+            // Debug.Log($"Node: {node.Index}, FCost: {node.FCost}");
+            terrainInfo.SetColor(node.Index, Color.white);
+        }
+            
+        terrainInfo.SetColor(_start.Index, Color.blue);
+        terrainInfo.SetColor(_end.Index, Color.magenta);
+        //path.ForEach(node => { Debug.Log($"Node: {node.Index}, FCost {node.FCost}"); });
     }
 }
