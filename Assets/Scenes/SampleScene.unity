@@ -646,7 +646,7 @@ PrefabInstance:
     - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: flyCostMultiplier
-      value: 1500
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
@@ -757,15 +757,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4035234843597502, guid: 30bdbf2b9c0bd8446af70e5b67b0dfc8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 15.974531
+      value: 34.13
       objectReference: {fileID: 0}
     - target: {fileID: 4035234843597502, guid: 30bdbf2b9c0bd8446af70e5b67b0dfc8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 7.91
+      value: 24.3
       objectReference: {fileID: 0}
     - target: {fileID: 4035234843597502, guid: 30bdbf2b9c0bd8446af70e5b67b0dfc8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 10.12
+      value: 42.33
       objectReference: {fileID: 0}
     - target: {fileID: 4035234843597502, guid: 30bdbf2b9c0bd8446af70e5b67b0dfc8, type: 3}
       propertyPath: m_LocalRotation.w
