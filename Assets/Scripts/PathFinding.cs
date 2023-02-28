@@ -39,6 +39,7 @@ public class PathFinding : MonoBehaviour
         _closedNodes.Clear();
         
         
+        // fix this
 
         var terrainHeights = terrainInfo.SampleHeights(samplesPerDimension, false);
         start.GCost = 0;
