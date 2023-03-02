@@ -7,6 +7,7 @@ public class PathGrid
     private PathNode[,] _grid;
     public PathNode[,] Grid { get => _grid; }
 
+    // fix problem here
     public PathGrid(int x, int y) {
         _grid = new PathNode[x, y];
         for (int i = 0; i < y; i++) {
