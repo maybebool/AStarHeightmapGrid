@@ -20,6 +20,7 @@ public class PathNode
     public float FlyCost { get; set; } // cost to fly up/down 
     
     public bool isWall { get; set; }
+    // google other solution
 
     public PathNode SourceNode;
     public TerrainInfo terrainInfo;
