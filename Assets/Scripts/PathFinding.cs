@@ -1,7 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 
 
 public class PathFinding : MonoBehaviour
@@ -10,17 +14,22 @@ public class PathFinding : MonoBehaviour
     [SerializeField] private int samplesPerDimension = 4;
     [SerializeField] private float flyCostMultiplier = 1.25f;
     [SerializeField] private TerrainInfo terrainInfo;
+    [SerializeField] private TextMeshProUGUI time;
     private List<PathNode> _path = new();
     private PathNode _start;
     private PathNode _end;
-
+    public Stopwatch timer;
     private List<PathNode> _openNodes = new();
     private List<PathNode> _closedNodes = new();
 
     private PathGrid _pathGrid;
-    private Coroutine _myCoroutine;
-    
-    
+    private Coroutine _currentCoroutine;
+
+
+    private void Start() {
+        timer = new Stopwatch();
+    }
+
 
     private void OnValidate() {
         samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
@@ -30,13 +39,13 @@ public class PathFinding : MonoBehaviour
     private void Update() {
         
         if (Input.GetKeyDown(KeyCode.Space)) {
-            
+            timer = Stopwatch.StartNew();
             RandomizePath();
 
-            if (_myCoroutine != null) {
-                StopCoroutine(_myCoroutine);
+            if (_currentCoroutine != null) {
+                StopCoroutine(_currentCoroutine);
             }
-            _myCoroutine = StartCoroutine(SetColorToPathCoroutine());
+            _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
     }
 
@@ -56,10 +65,12 @@ public class PathFinding : MonoBehaviour
         start.HCost = Vector2.Distance(start.Index, end.Index);
         start.FlyCost = 0;
         _openNodes.Add(start);
+        timer.Start();
         while (_openNodes.Count > 0)
         {
             var currentNode = GetLowestCostNode();
             if (currentNode == end) {
+                
                 return GetFinalPath(currentNode);
             }
 
@@ -71,6 +82,7 @@ public class PathFinding : MonoBehaviour
                     _closedNodes.Add(neighbour);
                     continue;
                 }
+                
 
                 if (!_closedNodes.Contains(neighbour)) {
                     var isDiagonal = currentNode.Index.x != neighbour.Index.x &&
@@ -92,9 +104,11 @@ public class PathFinding : MonoBehaviour
                 }
             }
         }
+        
 
         Debug.Log("No path found. Make sure and end are accessible");
         return null;
+        
     }
 
     private List<PathNode> GetFinalPath(PathNode endNode) {
@@ -107,7 +121,14 @@ public class PathFinding : MonoBehaviour
         }
 
         finalPath.Reverse();
+        
+        timer.Stop();
+        var s = timer.ElapsedMilliseconds;
+        time.text = s.ToString();
+        Debug.Log(s);
+        
         return finalPath;
+        
     }
 
     private PathNode GetLowestCostNode() {
@@ -137,14 +158,13 @@ public class PathFinding : MonoBehaviour
     IEnumerator SetColorToPathCoroutine() {
         _path = FindPath(_start, _end);
         foreach (var node in _path) {
-            // Debug.Log($"Node: {node.Index}, FCost: {node.FCost}");
             terrainInfo.SetColor(node.Index, Color.white);
             yield return new WaitForSeconds(0.05f);
         }
             
         terrainInfo.SetColor(_start.Index, Color.blue);
         terrainInfo.SetColor(_end.Index, Color.magenta);
-        //path.ForEach(node => { Debug.Log($"Node: {node.Index}, FCost {node.FCost}"); });
+        
     }
     
 
