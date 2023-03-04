@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,17 +18,25 @@ public class PathFinding : MonoBehaviour
     private List<PathNode> _closedNodes = new();
 
     private PathGrid _pathGrid;
+    private Coroutine _myCoroutine;
+    
+    
 
     private void OnValidate() {
         samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
     }
+    
 
     private void Update() {
         
         if (Input.GetKeyDown(KeyCode.Space)) {
             
             RandomizePath();
-            SetColorToPath();
+
+            if (_myCoroutine != null) {
+                StopCoroutine(_myCoroutine);
+            }
+            _myCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
     }
 
@@ -123,16 +133,20 @@ public class PathFinding : MonoBehaviour
             _end = _pathGrid.GetRandomNode();
         }
     }
-
-    private void SetColorToPath() {
+    
+    IEnumerator SetColorToPathCoroutine() {
         _path = FindPath(_start, _end);
         foreach (var node in _path) {
             // Debug.Log($"Node: {node.Index}, FCost: {node.FCost}");
             terrainInfo.SetColor(node.Index, Color.white);
+            yield return new WaitForSeconds(0.05f);
         }
             
         terrainInfo.SetColor(_start.Index, Color.blue);
         terrainInfo.SetColor(_end.Index, Color.magenta);
         //path.ForEach(node => { Debug.Log($"Node: {node.Index}, FCost {node.FCost}"); });
     }
+    
+
+    
 }
