@@ -22,6 +22,11 @@ namespace Job {
 
                     pathNode.GCost = int.MaxValue;
                     pathNode.HCost = CalculateDistanceCost(new int2(x, y), endPosition);
+                    pathNode.CalculateFCost();
+                    pathNode.IsWalkable = true;
+                    pathNode.CameFromNodeIndex = -1;
+
+                    pathNodeArray[pathNode.Index] = pathNode;
 
                 }
             }
@@ -53,6 +58,10 @@ namespace Job {
             public bool IsWalkable;
 
             public int CameFromNodeIndex;
+
+            public void CalculateFCost() {
+                FCost = GCost + HCost;
+            }
 
         }
     }
