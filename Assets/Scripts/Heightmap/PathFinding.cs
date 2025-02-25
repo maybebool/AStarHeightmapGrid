@@ -15,16 +15,16 @@ namespace Heightmap {
         private List<PathNode> _path = new();
         private PathNode _start;
         private PathNode _end;
-        public Stopwatch timer;
-        private List<PathNode> _openNodes = new();
-        private List<PathNode> _closedNodes = new();
+        private Stopwatch _timer;
+        private readonly List<PathNode> _openNodes = new();
+        private readonly List<PathNode> _closedNodes = new();
 
         private PathGrid _pathGrid;
         private Coroutine _currentCoroutine;
 
 
         private void Start() {
-            timer = new Stopwatch();
+            _timer = new Stopwatch();
         }
 
 
@@ -34,7 +34,7 @@ namespace Heightmap {
     
         
         public void RandomPathSearchEvent() {
-            timer = Stopwatch.StartNew();
+            _timer = Stopwatch.StartNew();
             RandomizePath();
             if (_currentCoroutine != null) {
                 StopCoroutine(_currentCoroutine);
@@ -54,7 +54,7 @@ namespace Heightmap {
             start.HCost = Vector2.Distance(start.Index, end.Index);
             start.FlyCost = 0;
             _openNodes.Add(start);
-            timer.Start();
+            _timer.Start();
             while (_openNodes.Count > 0)
             {
                 var currentNode = GetLowestCostNode();
@@ -109,8 +109,8 @@ namespace Heightmap {
 
             finalPath.Reverse();
         
-            timer.Stop();
-            var s = timer.ElapsedMilliseconds;
+            _timer.Stop();
+            var s = _timer.ElapsedMilliseconds;
             time.text = s.ToString();
         
             return finalPath;
@@ -144,12 +144,12 @@ namespace Heightmap {
         IEnumerator SetColorToPathCoroutine() {
             _path = BirdBehaviorHeightAvoidingAStarPathSearch(_start, _end);
             foreach (var node in _path) {
-                terrainInfo.SetColor(node.Index, Color.white);
+                terrainInfo.SetColor(node.Index, Color.black);
                 yield return new WaitForSeconds(0.05f);
             }
             
-            terrainInfo.SetColor(_start.Index, Color.blue);
-            terrainInfo.SetColor(_end.Index, Color.magenta);
+            terrainInfo.SetColor(_start.Index, Color.white);
+            terrainInfo.SetColor(_end.Index, Color.white);
         
         }
     }

@@ -743,7 +743,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
+  m_RenderShadows: 0
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
@@ -962,7 +962,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 0
@@ -1057,11 +1057,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adede2a240d84ba394e14e370833ff8a, type: 3}
+  m_Script: {fileID: 11500000, guid: 5ba3511b43a98c94ba80453ea89580d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   anchor: {fileID: 1838703341}
-  multiplier: 0
+  mainCamera: {fileID: 330585546}
+  lightXAngle: 50
 --- !u!1 &432191896
 GameObject:
   m_ObjectHideFlags: 0
@@ -1301,7 +1302,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 410087043}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DefaultNamespace.CameraMovement, Assembly-CSharp
         m_MethodName: SliderMultiplier
         m_Mode: 0

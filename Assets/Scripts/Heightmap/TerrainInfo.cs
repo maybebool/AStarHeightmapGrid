@@ -93,9 +93,9 @@ namespace Heightmap {
         }
     
         public void SetColor(Vector2Int index, Color color) {
-            _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material = path;
-            _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>().material.color = color;
-        
+            var mr = _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>();
+            mr.material = path;
+            mr.material.color = color;
         }
     }
 }
