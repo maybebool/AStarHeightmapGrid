@@ -1487,24 +1487,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pathFinding: {fileID: 1532459275}
-  leftMouseAction:
-    m_Name: Left Mouse
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 9f51a804-ae2c-4ffd-af3b-a2f7b312e2e2
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  rightMouseAction:
-    m_Name: Right Mouse
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: de844464-d9df-4476-ae57-c587f84c62f8
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
 --- !u!4 &822141338
 Transform:
   m_ObjectHideFlags: 0

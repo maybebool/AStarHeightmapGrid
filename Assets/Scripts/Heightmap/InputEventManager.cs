@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,26 +11,21 @@ namespace Heightmap {
         private void Awake() {
             _keyAction = new InputSystem_Actions();
         }
-
-
+        
         private void OnEnable() {
             _keyAction.Enable();
-            _keyAction.Player.Attack.performed+= OnAKeyPerformed;
-            _keyAction.Player.Jump.performed += OnSpaceKeyPerformed;
+            _keyAction.Player.Attack.performed += OnSpaceKeyPerformed;
         }
 
         private void OnDisable() {
+            _keyAction.Player.Attack.performed -= OnSpaceKeyPerformed;
             _keyAction.Disable();
         }
-    
-        private void OnAKeyPerformed(InputAction.CallbackContext context) {
-            if (pathFinding != null)
-                pathFinding.HandleRightMouseAction(); 
-        }
+        
     
         private void OnSpaceKeyPerformed(InputAction.CallbackContext context) {
             if (pathFinding != null)
-                pathFinding.HandleLeftMouseAction();
+                pathFinding.RandomPathSearchEvent();
         }
     }
 }

@@ -34,19 +34,16 @@ namespace Heightmap {
         }
     
         
-        public void HandleRightMouseAction() {
+        public void RandomPathSearchEvent() {
             timer = Stopwatch.StartNew();
             RandomizePath();
-        }
-
-        public void HandleLeftMouseAction() {
             if (_currentCoroutine != null) {
                 StopCoroutine(_currentCoroutine);
             }
             _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
 
-        public List<PathNode> FindPath(PathNode start, PathNode end) {
+        public List<PathNode> BirdBehaviorHeightAvoidingAStarPathSearch(PathNode start, PathNode end) {
             if (_pathGrid == null || !terrainInfo) {
                 return null;
             }
@@ -83,7 +80,7 @@ namespace Heightmap {
 
                         var gCost = currentNode.GCost + (isDiagonal ? 1.4f : 1);
                         var flyCost = (terrainHeights[neighbour.Index.x, neighbour.Index.y] -
-                                       terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier; // divide by 50 to make values less 
+                                       terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier; 
 
                         if (gCost + flyCost < neighbour.GCost) {
                             neighbour.GCost = gCost;
@@ -116,7 +113,6 @@ namespace Heightmap {
             timer.Stop();
             var s = timer.ElapsedMilliseconds;
             time.text = s.ToString();
-            Debug.Log(s);
         
             return finalPath;
         
@@ -147,7 +143,7 @@ namespace Heightmap {
         }
     
         IEnumerator SetColorToPathCoroutine() {
-            _path = FindPath(_start, _end);
+            _path = BirdBehaviorHeightAvoidingAStarPathSearch(_start, _end);
             foreach (var node in _path) {
                 terrainInfo.SetColor(node.Index, Color.white);
                 yield return new WaitForSeconds(0.05f);

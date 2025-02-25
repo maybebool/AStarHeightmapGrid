@@ -7,7 +7,7 @@ namespace Heightmap {
     public class TerrainInfo : MonoBehaviour
     {
         [SerializeField] private Terrain terrain;
-        [SerializeField] private int samplesPerSide = 40;
+        [SerializeField] private int samplesPerSide = 64;
         [SerializeField] private Material heatMap;
         [SerializeField] private Material path;
         [SerializeField] private Button cleanButton;
@@ -77,7 +77,6 @@ namespace Heightmap {
             _spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
             for (int y = 0; y < heights.GetLength(1); y++) {
                 for (int x = 0; x < heights.GetLength(0); x++) {
-                    // terrain position in Ws + width or length / heights, length + width / heigths.length / 2
                     var sampleLength = terrain.terrainData.size.x / heights.GetLength(0);
                     var sampleHalfLength = sampleLength / 2f;
                     var cubeSpawnPosition = terrain.transform.position + new Vector3(
