@@ -5,11 +5,10 @@ using TMPro;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-
 namespace Heightmap {
-    public class PathFinding : MonoBehaviour
-    {
-        // check why multiplier is not working as it should
+    public class PathFinding : MonoBehaviour {
+        
+        
         [SerializeField] private int samplesPerDimension = 4;
         [SerializeField] private float flyCostMultiplier = 1.25f;
         [SerializeField] private TerrainInfo terrainInfo;
@@ -34,29 +33,26 @@ namespace Heightmap {
             samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
         }
     
-
-        private void Update() {
         
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                timer = Stopwatch.StartNew();
-                RandomizePath();
+        public void HandleRightMouseAction() {
+            timer = Stopwatch.StartNew();
+            RandomizePath();
+        }
 
-                if (_currentCoroutine != null) {
-                    StopCoroutine(_currentCoroutine);
-                }
-                _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
+        public void HandleLeftMouseAction() {
+            if (_currentCoroutine != null) {
+                StopCoroutine(_currentCoroutine);
             }
+            _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
 
         public List<PathNode> FindPath(PathNode start, PathNode end) {
-            if (_pathGrid == null || terrainInfo == null) {
-                Debug.Log("No grid or terrain");
+            if (_pathGrid == null || !terrainInfo) {
                 return null;
             }
             _openNodes.Clear();
             _closedNodes.Clear();
-        
-
+            
             var terrainHeights = terrainInfo.SampleHeights(samplesPerDimension, false);
             start.GCost = 0;
             start.HCost = Vector2.Distance(start.Index, end.Index);
@@ -101,9 +97,7 @@ namespace Heightmap {
                     }
                 }
             }
-        
-
-            Debug.Log("No path found. Make sure and end are accessible");
+            
             return null;
         
         }
@@ -163,8 +157,5 @@ namespace Heightmap {
             terrainInfo.SetColor(_end.Index, Color.magenta);
         
         }
-    
-
-    
     }
 }

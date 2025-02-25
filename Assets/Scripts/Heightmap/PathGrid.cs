@@ -3,11 +3,10 @@ using UnityEngine;
 
 
 namespace Heightmap {
-    public class PathGrid
-    {
-        public PathNode[,] Grid { get; }
-
-        // fix problem here
+    public class PathGrid {
+        
+        private PathNode[,] Grid { get; }
+        
         public PathGrid(int x, int y) {
             Grid = new PathNode[x, y];
             for (int i = 0; i < y; i++) {
@@ -32,10 +31,25 @@ namespace Heightmap {
             }
             return nodes.ToArray();
         }
+        
+        public Vector2Int GetNodeIndexFromWorldPosition(Vector3 worldPosition) {
+            int x = Mathf.FloorToInt(worldPosition.x);
+            int y = Mathf.FloorToInt(worldPosition.z); // Using Z for the second coordinate
+            return new Vector2Int(x, y);
+        }
+
+        // Returns the node at the given grid index.
+        // Returns null if the index is out of bounds.
+        public PathNode GetNodeAt(Vector2Int index) {
+            if (index.x >= 0 && index.x < Grid.GetLength(0) && 
+                index.y >= 0 && index.y < Grid.GetLength(1)) {
+                return Grid[index.x, index.y];
+            }
+            return null;
+        }
 
         public PathNode GetRandomNode() {
             return Grid[Random.Range(0, Grid.GetLength(0)), Random.Range(0, Grid.GetLength(1))];
         }
-    
     }
 }

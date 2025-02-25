@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Height
+  m_Name: M_Height
   m_Shader: {fileID: -6465566751694194690, guid: 337ad9057c4b18041b3dcfedf3669a6c,
     type: 3}
   m_Parent: {fileID: 0}
