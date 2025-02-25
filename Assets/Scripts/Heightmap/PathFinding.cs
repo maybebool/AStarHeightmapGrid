@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heightmap {
     public class PathFinding : MonoBehaviour {
@@ -23,6 +24,13 @@ namespace Heightmap {
         private Coroutine _currentCoroutine;
 
 
+        [FormerlySerializedAs("startMarkerPrefab")]
+        [Header("Marker Settings")]
+        [SerializeField] private GameObject markerPrefab;
+        [SerializeField] private float markerHeight = 27.0f;
+        private GameObject _currentStartMarker;
+        private GameObject _currentEndMarker;
+        
         private void Start() {
             _timer = new Stopwatch();
         }
@@ -30,6 +38,26 @@ namespace Heightmap {
 
         private void OnValidate() {
             samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
+        }
+        
+        public void SpawnMarkers() {
+            
+            if (_currentStartMarker != null) {
+                Destroy(_currentStartMarker);
+            }
+            if (_currentEndMarker != null) {
+                Destroy(_currentEndMarker);
+            }
+            
+            // Assuming that the PathNode.Index holds grid coordinates (x and y) and you want to treat them as (x, z) in world space.
+            Vector3 startPos = _pathGrid.GetWorldPositionFromNodeIndex(_start.Index, markerHeight);
+            Vector3 endPos = _pathGrid.GetWorldPositionFromNodeIndex(_end.Index, markerHeight);
+            
+            if (markerPrefab != null)
+                _currentStartMarker = Instantiate(markerPrefab, startPos, Quaternion.identity);
+            
+            if (markerPrefab != null)
+                _currentEndMarker = Instantiate(markerPrefab, endPos, Quaternion.identity);
         }
     
         
@@ -139,18 +167,17 @@ namespace Heightmap {
             while (_start == _end) {
                 _end = _pathGrid.GetRandomNode();
             }
+            terrainInfo.SetColor(_start.Index, Color.white);
+            terrainInfo.SetColor(_end.Index, Color.white);
         }
-    
-        IEnumerator SetColorToPathCoroutine() {
+
+        private IEnumerator SetColorToPathCoroutine() {
             _path = BirdBehaviorHeightAvoidingAStarPathSearch(_start, _end);
+            SpawnMarkers();
             foreach (var node in _path) {
                 terrainInfo.SetColor(node.Index, Color.black);
                 yield return new WaitForSeconds(0.05f);
             }
-            
-            terrainInfo.SetColor(_start.Index, Color.white);
-            terrainInfo.SetColor(_end.Index, Color.white);
-        
         }
     }
 }

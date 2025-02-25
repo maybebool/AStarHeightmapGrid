@@ -1062,7 +1062,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anchor: {fileID: 1838703341}
   mainCamera: {fileID: 330585546}
-  lightXAngle: 50
+  lightXAngle: 130
 --- !u!1 &432191896
 GameObject:
   m_ObjectHideFlags: 0
@@ -1407,6 +1407,17 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: markerHeight
+      value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
+        type: 3}
+      propertyPath: markerPrefab
+      value: 
+      objectReference: {fileID: 7515744454826646868, guid: 0b404390953b92e479d2b789dcafb86f,
+        type: 3}
     - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: flyCostMultiplier

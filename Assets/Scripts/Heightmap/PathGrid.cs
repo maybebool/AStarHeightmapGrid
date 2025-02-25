@@ -6,8 +6,10 @@ namespace Heightmap {
     public class PathGrid {
         
         private PathNode[,] Grid { get; }
+        private Vector3 origin;
         
-        public PathGrid(int x, int y) {
+        public PathGrid(int x, int y, Vector3 origin = default) {
+            this.origin = origin;
             Grid = new PathNode[x, y];
             for (int i = 0; i < y; i++) {
                 for (int j = 0; j < x; j++) {
@@ -33,13 +35,11 @@ namespace Heightmap {
         }
         
         public Vector2Int GetNodeIndexFromWorldPosition(Vector3 worldPosition) {
-            int x = Mathf.FloorToInt(worldPosition.x);
-            int y = Mathf.FloorToInt(worldPosition.z); // Using Z for the second coordinate
+            int x = Mathf.FloorToInt(worldPosition.x - origin.x);
+            int y = Mathf.FloorToInt(worldPosition.z - origin.z); 
             return new Vector2Int(x, y);
         }
-
-        // Returns the node at the given grid index.
-        // Returns null if the index is out of bounds.
+        
         public PathNode GetNodeAt(Vector2Int index) {
             if (index.x >= 0 && index.x < Grid.GetLength(0) && 
                 index.y >= 0 && index.y < Grid.GetLength(1)) {
@@ -50,6 +50,12 @@ namespace Heightmap {
 
         public PathNode GetRandomNode() {
             return Grid[Random.Range(0, Grid.GetLength(0)), Random.Range(0, Grid.GetLength(1))];
+        }
+        
+        // New helper method: Convert a node index to world position.
+        // This assumes each cell is 1 unit in size; adjust the offset if needed.
+        public Vector3 GetWorldPositionFromNodeIndex(Vector2Int index, float yOffset) {
+            return origin + new Vector3(index.x + 0.5f, yOffset, index.y + 0.5f);
         }
     }
 }
