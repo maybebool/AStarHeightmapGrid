@@ -51,7 +51,7 @@ public class DemoController : MonoBehaviour
 
 			if (stickDirection != Vector3.zero && !isAttacking)
 				transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(stickDirection, Vector3.up), rotationDegreePerSecond * Time.deltaTime);
-			GetComponent<Rigidbody>().velocity = transform.forward * speedOut * walkspeed + new Vector3(0, GetComponent<Rigidbody>().velocity.y, 0);
+			GetComponent<Rigidbody>().linearVelocity = transform.forward * speedOut * walkspeed + new Vector3(0, GetComponent<Rigidbody>().linearVelocity.y, 0);
 
 			animator.SetFloat("Speed", speedOut);
 		}
@@ -163,7 +163,7 @@ public class DemoController : MonoBehaviour
     public IEnumerator selfdestruct()
     {
         animator.SetTrigger("isDead");
-        GetComponent<Rigidbody>().velocity = Vector3.zero;
+        GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         dead = true;
 
         yield return new WaitForSeconds(3f);
