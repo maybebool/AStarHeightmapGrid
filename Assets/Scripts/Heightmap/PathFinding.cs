@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using TMPro;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Heightmap {
     public class PathFinding : MonoBehaviour {

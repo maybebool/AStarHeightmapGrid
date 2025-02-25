@@ -12,7 +12,6 @@ namespace Heightmap {
         [SerializeField] private Material path;
         [SerializeField] private Button cleanButton;
         private TerrainInfo _terrainInfo;
-        public int SamplesPerSide { get => samplesPerSide; }
 
         private GameObject[,] _spawnedCubes;
     
@@ -55,9 +54,6 @@ namespace Heightmap {
                     float maxHeight = 0;
                     for (int y = 0; y <= sampleStepSize; y++) {
                         for (int x = 0; x <= sampleStepSize; x++) {
-                            // current origin of the sample
-                            // + x / y
-                            // get height of this position, if its higher than previously saved value store it.
                             var yPos = currentSampleY * sampleStepSize + y;
                             var xPos = currentSampleX * sampleStepSize + x;
                       
@@ -72,8 +68,7 @@ namespace Heightmap {
             return returnHeights;
         }
 
-        public void SpawnDebugCubes(float[,] heights) 
-        {
+        private void SpawnDebugCubes(float[,] heights) {
             _spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
             for (int y = 0; y < heights.GetLength(1); y++) {
                 for (int x = 0; x < heights.GetLength(0); x++) {
@@ -91,7 +86,7 @@ namespace Heightmap {
         }
 
 
-        public void SetHeatmap() {
+        private void SetHeatmap() {
             foreach (var cube in _spawnedCubes) {
                 cube.GetComponent<MeshRenderer>().material = heatMap;
             }
