@@ -20,9 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_ParticleBeam
-  m_Shader: {fileID: -6465566751694194690, guid: 61caa8d03b80aa048929a0fa7fb97dc7,
-    type: 3}
+  m_Name: M_ParticleBeam 1
+  m_Shader: {fileID: 4800000, guid: ba736812aefcbeb4cb9ddc4c27dce1a3, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -64,7 +63,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: dfad735023a8bcb4181818b96967fd7a, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 3, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -143,6 +142,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _ScrollSpeed: -3
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SoftParticlesEnabled: 0
@@ -152,6 +152,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _Threshold: 0.192
     - _Threshold1: 1
     - _WorkflowMode: 1
     - _XSpeed: 0.1
