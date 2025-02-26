@@ -8,7 +8,6 @@ using UnityEngine.Serialization;
 namespace Heightmap {
     public class PathFinding : MonoBehaviour {
         
-        
         [SerializeField] private int samplesPerDimension = 4;
         [SerializeField] private float flyCostMultiplier = 1.25f;
         [SerializeField] private TerrainInfo terrainInfo;
@@ -22,8 +21,7 @@ namespace Heightmap {
 
         private PathGrid _pathGrid;
         private Coroutine _currentCoroutine;
-
-
+        
         [FormerlySerializedAs("startMarkerPrefab")]
         [Header("Marker Settings")]
         [SerializeField] private GameObject markerPrefab;
@@ -34,32 +32,30 @@ namespace Heightmap {
         private void Start() {
             _timer = new Stopwatch();
         }
-
-
+        
         private void OnValidate() {
             samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
         }
         
         public void SpawnMarkers() {
-            
-            if (_currentStartMarker != null) {
+            if (_currentStartMarker) {
                 Destroy(_currentStartMarker);
             }
-            if (_currentEndMarker != null) {
+            if (_currentEndMarker) {
                 Destroy(_currentEndMarker);
             }
             
-            // Assuming that the PathNode.Index holds grid coordinates (x and y) and you want to treat them as (x, z) in world space.
-            Vector3 startPos = _pathGrid.GetWorldPositionFromNodeIndex(_start.Index, markerHeight);
-            Vector3 endPos = _pathGrid.GetWorldPositionFromNodeIndex(_end.Index, markerHeight);
+            float cellSize = terrainInfo.CellSize;
             
+            var startPos = _pathGrid.GetWorldPositionFromNodeIndex(_start.Index, markerHeight, cellSize);
+            var endPos = _pathGrid.GetWorldPositionFromNodeIndex(_end.Index, markerHeight, cellSize);
+    
             if (markerPrefab != null)
                 _currentStartMarker = Instantiate(markerPrefab, startPos, Quaternion.identity);
-            
+    
             if (markerPrefab != null)
                 _currentEndMarker = Instantiate(markerPrefab, endPos, Quaternion.identity);
         }
-    
         
         public void RandomPathSearchEvent() {
             _timer = Stopwatch.StartNew();
@@ -157,20 +153,19 @@ namespace Heightmap {
             }
             return lowestCostNode;
         }
-
-
+        
         private void RandomizePath() {
-            _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension);
+            _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension, terrainInfo.transform.position);
             _start = _pathGrid.GetRandomNode();
             _end = _pathGrid.GetRandomNode();
-            
+    
             while (_start == _end) {
                 _end = _pathGrid.GetRandomNode();
             }
             terrainInfo.SetColor(_start.Index, Color.white);
             terrainInfo.SetColor(_end.Index, Color.white);
         }
-
+        
         private IEnumerator SetColorToPathCoroutine() {
             _path = BirdBehaviorHeightAvoidingAStarPathSearch(_start, _end);
             SpawnMarkers();

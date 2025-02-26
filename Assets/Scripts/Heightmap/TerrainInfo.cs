@@ -14,6 +14,12 @@ namespace Heightmap {
         private TerrainInfo _terrainInfo;
 
         private GameObject[,] _spawnedCubes;
+        
+        public float CellSize {
+            get {
+                return terrain.terrainData.size.x / samplesPerSide;
+            }
+        }
     
     
         private void OnEnable() {

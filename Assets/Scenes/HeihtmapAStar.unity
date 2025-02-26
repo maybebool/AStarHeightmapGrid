@@ -1410,13 +1410,13 @@ PrefabInstance:
     - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: markerHeight
-      value: 17
+      value: 35
       objectReference: {fileID: 0}
     - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
       propertyPath: markerPrefab
       value: 
-      objectReference: {fileID: 7515744454826646868, guid: 0b404390953b92e479d2b789dcafb86f,
+      objectReference: {fileID: 7468979054827875689, guid: 0b404390953b92e479d2b789dcafb86f,
         type: 3}
     - target: {fileID: 7099189764252422604, guid: 2a80af1c8afa5a3429e10706f5cb78ef,
         type: 3}
