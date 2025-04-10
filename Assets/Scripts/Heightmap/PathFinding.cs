@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using TMPro;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
-
+using UnityEngine.Serialization;
 
 namespace Heightmap {
-    public class PathFinding : MonoBehaviour
-    {
-        // check why multiplier is not working as it should
+    public class PathFinding : MonoBehaviour {
+        
         [SerializeField] private int samplesPerDimension = 4;
         [SerializeField] private float flyCostMultiplier = 1.25f;
         [SerializeField] private TerrainInfo terrainInfo;
@@ -17,52 +15,70 @@ namespace Heightmap {
         private List<PathNode> _path = new();
         private PathNode _start;
         private PathNode _end;
-        public Stopwatch timer;
-        private List<PathNode> _openNodes = new();
-        private List<PathNode> _closedNodes = new();
+        private Stopwatch _timer;
+        private readonly List<PathNode> _openNodes = new();
+        private readonly List<PathNode> _closedNodes = new();
 
         private PathGrid _pathGrid;
         private Coroutine _currentCoroutine;
-
-
+        
+        [FormerlySerializedAs("startMarkerPrefab")]
+        [Header("Marker Settings")]
+        [SerializeField] private GameObject markerPrefab;
+        [SerializeField] private float markerHeight = 27.0f;
+        private GameObject _currentStartMarker;
+        private GameObject _currentEndMarker;
+        
         private void Start() {
-            timer = new Stopwatch();
+            _timer = new Stopwatch();
         }
-
-
+        
         private void OnValidate() {
             samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
         }
-    
-
-        private void Update() {
         
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                timer = Stopwatch.StartNew();
-                RandomizePath();
-
-                if (_currentCoroutine != null) {
-                    StopCoroutine(_currentCoroutine);
-                }
-                _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
+        public void SpawnMarkers() {
+            if (_currentStartMarker) {
+                Destroy(_currentStartMarker);
             }
+            if (_currentEndMarker) {
+                Destroy(_currentEndMarker);
+            }
+            
+            float cellSize = terrainInfo.CellSize;
+            
+            var startPos = _pathGrid.GetWorldPositionFromNodeIndex(_start.Index, markerHeight, cellSize);
+            var endPos = _pathGrid.GetWorldPositionFromNodeIndex(_end.Index, markerHeight, cellSize);
+    
+            if (markerPrefab != null)
+                _currentStartMarker = Instantiate(markerPrefab, startPos, Quaternion.identity);
+    
+            if (markerPrefab != null)
+                _currentEndMarker = Instantiate(markerPrefab, endPos, Quaternion.identity);
+        }
+        
+        public void RandomPathSearchEvent() {
+            _timer = Stopwatch.StartNew();
+            RandomizePath();
+            if (_currentCoroutine != null) {
+                StopCoroutine(_currentCoroutine);
+            }
+            _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
 
-        public List<PathNode> FindPath(PathNode start, PathNode end) {
-            if (_pathGrid == null || terrainInfo == null) {
-                Debug.Log("No grid or terrain");
+        public List<PathNode> BirdBehaviorHeightAvoidingAStarPathSearch(PathNode start, PathNode end) {
+            if (_pathGrid == null || !terrainInfo) {
                 return null;
             }
             _openNodes.Clear();
             _closedNodes.Clear();
-        
-
+            
             var terrainHeights = terrainInfo.SampleHeights(samplesPerDimension, false);
             start.GCost = 0;
             start.HCost = Vector2.Distance(start.Index, end.Index);
             start.FlyCost = 0;
             _openNodes.Add(start);
-            timer.Start();
+            _timer.Start();
             while (_openNodes.Count > 0)
             {
                 var currentNode = GetLowestCostNode();
@@ -87,7 +103,7 @@ namespace Heightmap {
 
                         var gCost = currentNode.GCost + (isDiagonal ? 1.4f : 1);
                         var flyCost = (terrainHeights[neighbour.Index.x, neighbour.Index.y] -
-                                       terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier; // divide by 50 to make values less 
+                                       terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier; 
 
                         if (gCost + flyCost < neighbour.GCost) {
                             neighbour.GCost = gCost;
@@ -101,9 +117,7 @@ namespace Heightmap {
                     }
                 }
             }
-        
-
-            Debug.Log("No path found. Make sure and end are accessible");
+            
             return null;
         
         }
@@ -119,10 +133,9 @@ namespace Heightmap {
 
             finalPath.Reverse();
         
-            timer.Stop();
-            var s = timer.ElapsedMilliseconds;
+            _timer.Stop();
+            var s = _timer.ElapsedMilliseconds;
             time.text = s.ToString();
-            Debug.Log(s);
         
             return finalPath;
         
@@ -140,31 +153,26 @@ namespace Heightmap {
             }
             return lowestCostNode;
         }
-
-
+        
         private void RandomizePath() {
-            _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension);
+            _pathGrid = new PathGrid(samplesPerDimension, samplesPerDimension, terrainInfo.transform.position);
             _start = _pathGrid.GetRandomNode();
             _end = _pathGrid.GetRandomNode();
-            
+    
             while (_start == _end) {
                 _end = _pathGrid.GetRandomNode();
             }
+            terrainInfo.SetColor(_start.Index, Color.white);
+            terrainInfo.SetColor(_end.Index, Color.white);
         }
-    
-        IEnumerator SetColorToPathCoroutine() {
-            _path = FindPath(_start, _end);
+        
+        private IEnumerator SetColorToPathCoroutine() {
+            _path = BirdBehaviorHeightAvoidingAStarPathSearch(_start, _end);
+            SpawnMarkers();
             foreach (var node in _path) {
-                terrainInfo.SetColor(node.Index, Color.white);
+                terrainInfo.SetColor(node.Index, Color.black);
                 yield return new WaitForSeconds(0.05f);
             }
-            
-            terrainInfo.SetColor(_start.Index, Color.blue);
-            terrainInfo.SetColor(_end.Index, Color.magenta);
-        
         }
-    
-
-    
     }
 }

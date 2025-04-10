@@ -8,4 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/HeihtmapAStar.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: cc1820f71d7857d40bb4f02d02358d75,
+      type: 2}
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 19c5647cc539ab6469b847f71710b4fd,
+      type: 3}
+  m_UseUCBPForAssetBundles: 0
