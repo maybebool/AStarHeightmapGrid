@@ -1,5 +1,5 @@
 ## A* Algorithm for flying objects 
-(In delevopement) 
+(under development) 
 
 A modified A* algorithm that introduces a FlyCost variable to produce more realistic flight behavior for flying creatures around large obstacles such as mountains or buildings.
 
