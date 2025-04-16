@@ -5,8 +5,8 @@ A modified A* algorithm that introduces a FlyCost variable to produce more reali
 The key was to reproduce the Algorithm used in Horizon Zero Dawn: https://www.guerrilla-games.com/read/putting-the-ai-back-into-air
 
 
-### How Play
+### How to Play
 - Press Enter to create new paths
-- use the UI to clean the paths or rotate the camera
+- Use the UI to clean the paths or rotate the camera
 
 ![Example](https://github.com/maybebool/AStarHeightmapGrid/blob/main/Recordings/Image%20Sequence_003_0005.jpg)
