@@ -15,7 +15,7 @@ The key was to reproduce the Algorithm used in Horizon Zero Dawn: https://www.gu
 ### Core Pathfinding Math
 -----------------------------------------------------------------------------
 
-| Symbol      | Meaning                                                |
+| Variable      | Meaning                                                |
 |-------------|--------------------------------------------------------|
 | **GCost(n)**| Accumulated travel cost from the start node            |
 | **HCost(n)**| Straight‑line heuristic to the target node             |
@@ -31,7 +31,7 @@ FCost(n) = GCost(n) + FlyCost(n) + HCost(n)
 
 For a step from the current node **p** to a neighbour **n**
 ```csharp
-movementCost = (isDiagonal ? 1.4 : 1.0) GCost(n) = GCost(p) + movementCost
+var gCost = currentNode.GCost + (isDiagonal ? 1.4f : 1f);
 ```
 
 *1.4* is an integer‑friendly approximation of √2 for diagonal moves.
@@ -43,7 +43,8 @@ The terrain is pre‑sampled into `terrainHeights[x,y]`.
 Moving from `p = (x_p, y_p)` to `n = (x_n, y_n)`:
 
 ```csharp
-deltaHeight = terrainHeights[x_n, y_n] - terrainHeights[x_p, y_p] FlyCost(n) = deltaHeight * flyCostMultiplier
+var flyCost = (terrainHeights[neighbour.Index.x, neighbour.Index.y] -
+terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier;
 ```
 
 * `deltaHeight > 0` → uphill ⇒ **cost increases**  
@@ -56,7 +57,7 @@ Set `flyCostMultiplier` to tune how much slope matters.
 Euclidean distance on the grid:
 
 ```csharp
-HCost(n) = sqrt( (x_n - x_end)^2 + (y_n - y_end)^2 )
+neighbour.HCost = Vector2.Distance(neighbour.Index, end.Index);
 ```
 
 ### 4  Main Loop
@@ -75,7 +76,3 @@ HCost(n) = sqrt( (x_n - x_end)^2 + (y_n - y_end)^2 )
 - **Hiking simulations** – favour routes with gentle ascents/descents.  
 - **Games** – create natural‑looking paths in hilly terrain without expensive
   3‑D checks.
-
-
-
-
