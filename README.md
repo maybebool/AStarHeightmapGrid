@@ -15,45 +15,67 @@ The key was to reproduce the Algorithm used in Horizon Zero Dawn: https://www.gu
 ### Core Pathfinding Math
 -----------------------------------------------------------------------------
 
-My A* implementation uses three cost components for each node \(n\):
+| Symbol      | Meaning                                                |
+|-------------|--------------------------------------------------------|
+| **GCost(n)**| Accumulated travel cost from the start node            |
+| **HCost(n)**| Straight‑line heuristic to the target node             |
+| **FlyCost(n)**| Extra cost for climbing (or bonus for descending)    |
 
-1. **G‑Cost** (\(G(n)\))  
-   The exact cost from the start node to \(n\).  
-   - Moving orthogonally (up/down/left/right) adds **1.0**.  
-   - Moving diagonally adds **\(\sqrt2 \approx 1.4\)**.  
-   \[
-     G(\text{neighbor}) = G(\text{current}) + 
-       \begin{cases}
-         1.0, & \text{if orthogonal} \\
-         \sqrt2, & \text{if diagonal}
-       \end{cases}
-   \]
+The priority key used to pick the next node is
 
-2. **Heuristic (H‑Cost)** (\(H(n)\))  
-   An admissible estimate of the cost from \(n\) to the goal, using straight‑line distance (Euclidean):
-   \[
-     H(n) = \sqrt{(x_{n}-x_{\text{end}})^2 + (y_{n}-y_{\text{end}})^2}
-   \]
+```csharp
+FCost(n) = GCost(n) + FlyCost(n) + HCost(n)
+```
 
-3. **Fly Cost** (\(F_{\text{fly}}(n)\))  
-   A penalty (or bonus) based on terrain elevation change between the current node and its neighbor:
-   \[
-     F_{\text{fly}}(n) 
-       = \bigl(h(n) - h(\text{current})\bigr) \times k
-   \]
-   - \(h(n)\) = terrain height at node \(n\).  
-   - \(k\) = your `flyCostMultiplier`.  
-   - **Positive** if climbing (penalty), **negative** if descending (bonus).
+### 1  Movement Cost — *GCost*
+
+For a step from the current node **p** to a neighbour **n**
+```csharp
+movementCost = (isDiagonal ? 1.4 : 1.0) GCost(n) = GCost(p) + movementCost
+```
+
+*1.4* is an integer‑friendly approximation of √2 for diagonal moves.
+
+
+### 2  Height Penalty/Bonus — *FlyCost*
+
+The terrain is pre‑sampled into `terrainHeights[x,y]`.  
+Moving from `p = (x_p, y_p)` to `n = (x_n, y_n)`:
+
+```csharp
+deltaHeight = terrainHeights[x_n, y_n] - terrainHeights[x_p, y_p] FlyCost(n) = deltaHeight * flyCostMultiplier
+```
+
+* `deltaHeight > 0` → uphill ⇒ **cost increases**  
+* `deltaHeight < 0` → downhill ⇒ **cost decreases**
+Set `flyCostMultiplier` to tune how much slope matters.
+
+
+### 3  Heuristic — *HCost*
+
+Euclidean distance on the grid:
+
+```csharp
+HCost(n) = sqrt( (x_n - x_end)^2 + (y_n - y_end)^2 )
+```
+
+### 4  Main Loop
+
+1. Start: set `GCost(start)=0`, `HCost`, `FlyCost=0`; add **start** to open list.  
+2. Pop the open node with the lowest **FCost**.  
+3. For each neighbour, apply the update rule above.  
+4. Move the processed node to the closed list; repeat until the target node is popped  
+   (success) or the open list is empty (no path).
 
 ---
 
-### Total Cost & Node Selection
+### Why a Fly Cost?
 
-Each node’s **F‑Cost** is the sum of all three:
-\[
-  F(n) = G(n) + H(n) + F_{\text{fly}}(n)
-\]
-At each step, A* picks the open node with the lowest \(F\)-Cost:
-```csharp
-var currentNode = GetLowestCostNode(); // lowest G+H+Fly
+- **Realistic flight/drone paths** – avoid steep climbs that waste energy.  
+- **Hiking simulations** – favour routes with gentle ascents/descents.  
+- **Games** – create natural‑looking paths in hilly terrain without expensive
+  3‑D checks.
+
+
+
 
