@@ -1,7 +1,6 @@
 ﻿using UnityEngine.Events;
 using UnityEngine.UI;
 
-
 public static class Utils {
         
     /// <summary>
