@@ -67,7 +67,13 @@ namespace Heightmap {
             _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
 
-        public List<PathNode> CalculateAStarPath(PathNode start, PathNode end) {
+        /// <summary>
+        /// Calculates the shortest path between the start and end nodes using the A* algorithm.
+        /// </summary>
+        /// <param name="start">The starting node for the pathfinding algorithm.</param>
+        /// <param name="end">The target node to reach during the pathfinding operation.</param>
+        /// <returns>A list of PathNode objects representing the calculated path from the start node to the end node, or null if no path is found.</returns>
+        private List<PathNode> CalculateAStarPath(PathNode start, PathNode end) {
             if (_pathGrid == null || !terrainInfo) {
                 return null;
             }
@@ -92,7 +98,7 @@ namespace Heightmap {
                 _closedNodes.Add(currentNode);
                 var neighbours = _pathGrid.GetAllNeighbours(currentNode.Index);
                 foreach (var neighbour in neighbours) {
-                    if (neighbour.isWall) {
+                    if (neighbour.IsWall) {
                         _closedNodes.Add(neighbour);
                         continue;
                     }
@@ -108,9 +114,15 @@ namespace Heightmap {
             }
             
             return null;
-        
         }
-        
+
+        /// <summary>
+        /// Updates the cost values for a neighboring node during pathfinding.
+        /// </summary>
+        /// <param name="currentNode">The current node being evaluated in the pathfinding process.</param>
+        /// <param name="neighbour">The neighboring node whose costs are to be updated.</param>
+        /// <param name="end">The destination node for the pathfinding operation.</param>
+        /// <param name="terrainHeights">A 2D array of terrain heights used to calculate fly costs within the pathfinding algorithm.</param>
         private void UpdateNeighborCosts(PathNode currentNode, PathNode neighbour, PathNode end, float[,] terrainHeights) {
             var isDiagonal = currentNode.Index.x != neighbour.Index.x && currentNode.Index.y != neighbour.Index.y;
             var gCost = currentNode.GCost + (isDiagonal ? 1.4f : 1f);
