@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 namespace Heightmap {
     public class PathGrid {
         
@@ -17,7 +16,12 @@ namespace Heightmap {
                 }
             }
         }
-        
+
+        /// <summary>
+        /// Retrieves all neighboring nodes of the specified node index within the grid.
+        /// </summary>
+        /// <param name="index">The index of the node to find neighbors for, represented as a 2D coordinate (Vector2Int).</param>
+        /// <returns>An array of <see cref="PathNode"/> objects representing the neighboring nodes.</returns>
         public PathNode[] GetAllNeighbours(Vector2Int index) {
             var nodes = new List<PathNode>(9);
             for (int i = -1; i < 2; i++) {

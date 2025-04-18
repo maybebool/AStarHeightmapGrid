@@ -11,17 +11,9 @@ namespace Heightmap {
         [SerializeField] private Material heatMap;
         [SerializeField] private Material path;
         [SerializeField] private Button cleanButton;
-        private TerrainInfo _terrainInfo;
-
         private GameObject[,] _spawnedCubes;
+        public float CellSize => terrain.terrainData.size.x / samplesPerSide;
         
-        public float CellSize {
-            get {
-                return terrain.terrainData.size.x / samplesPerSide;
-            }
-        }
-    
-    
         private void OnEnable() {
             Utils.BindButtonPlusParamsAction(cleanButton, CleanButtonClick);
         }
@@ -29,7 +21,6 @@ namespace Heightmap {
         private void OnDisable() {
             cleanButton.onClick.RemoveAllListeners();
         }
-
 
         private void CleanButtonClick() {
             SetHeatmap();
@@ -39,7 +30,6 @@ namespace Heightmap {
             if (terrain == null) {
                 terrain = GetComponent<Terrain>();
             }
-
             samplesPerSide = Mathf.ClosestPowerOfTwo(samplesPerSide);
         }
 
@@ -48,45 +38,59 @@ namespace Heightmap {
             SetHeatmap();
         }
 
-        public float[,] SampleHeights(int samplesPerDimension, bool inWorldUnits = true)
-        {
-            var terrainResolution = terrain.terrainData.heightmapResolution;
-            var sampleStepSize = terrainResolution / samplesPerDimension;
-            var heights = terrain.terrainData.GetHeights(0, 0, terrainResolution, terrainResolution);
-            var returnHeights = new float[samplesPerDimension, samplesPerDimension];
-      
-            for (int currentSampleY = 0; currentSampleY < samplesPerDimension; currentSampleY++) {
-                for (int currentSampleX = 0; currentSampleX < samplesPerDimension; currentSampleX++) {
-                    float maxHeight = 0;
-                    for (int y = 0; y <= sampleStepSize; y++) {
-                        for (int x = 0; x <= sampleStepSize; x++) {
-                            var yPos = currentSampleY * sampleStepSize + y;
-                            var xPos = currentSampleX * sampleStepSize + x;
-                      
-                            if (heights[xPos, yPos] > maxHeight) {
-                                maxHeight = heights[xPos,yPos];
-                            }
-                        }
-                    }
-                    returnHeights[currentSampleY, currentSampleX] = inWorldUnits ? maxHeight * terrain.terrainData.heightmapScale.y : maxHeight;
+        public float[,] SampleHeights(int samplesPerDimension, bool inWorldUnits = true) {
+            var resolution = terrain.terrainData.heightmapResolution;
+            var stepSize = resolution / samplesPerDimension;
+            var heights = terrain.terrainData.GetHeights(0, 0, resolution, resolution);
+            var sampledHeights = new float[samplesPerDimension, samplesPerDimension];
+
+            for (int sampleY = 0; sampleY < samplesPerDimension; sampleY++)
+            {
+                for (int sampleX = 0; sampleX < samplesPerDimension; sampleX++)
+                {
+                    float maxHeight = FindMaxHeight(heights, sampleY, sampleX, stepSize);
+                    sampledHeights[sampleY, sampleX] = inWorldUnits 
+                        ? maxHeight * terrain.terrainData.heightmapScale.y 
+                        : maxHeight;
                 }
             }
-            return returnHeights;
+            return sampledHeights;
         }
 
-        private void SpawnDebugCubes(float[,] heights) {
-            _spawnedCubes = new GameObject[heights.GetLength(0), heights.GetLength(1)];
-            for (int y = 0; y < heights.GetLength(1); y++) {
-                for (int x = 0; x < heights.GetLength(0); x++) {
-                    var sampleLength = terrain.terrainData.size.x / heights.GetLength(0);
-                    var sampleHalfLength = sampleLength / 2f;
-                    var cubeSpawnPosition = terrain.transform.position + new Vector3(
-                        x * sampleLength + sampleHalfLength, heights[x, y] / 2f, y * sampleLength + sampleHalfLength);
-                
-                    var voxelCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    voxelCube.transform.position = cubeSpawnPosition;
-                    voxelCube.transform.localScale = new Vector3(sampleLength, heights[x, y], sampleLength);
-                    _spawnedCubes[x, y] = voxelCube;
+        private float FindMaxHeight(float[,] heights, int sampleY, int sampleX, int stepSize) {
+            var maxVal = 0f;
+            for (int y = 0; y <= stepSize; y++) {
+                for (int x = 0; x <= stepSize; x++) {
+                    var posY = sampleY * stepSize + y;
+                    var posX = sampleX * stepSize + x;
+                    var currentHeight = heights[posX, posY];
+                    if (currentHeight > maxVal) {
+                        maxVal = currentHeight;
+                    }
+                }
+            }
+            return maxVal;
+        }
+
+
+        private void SpawnDebugCubes(float[,] heightMap) {
+            var cellSize = terrain.terrainData.size.x / heightMap.GetLength(0);
+            var halfCellSize = cellSize / 2f;
+            _spawnedCubes = new GameObject[heightMap.GetLength(0), heightMap.GetLength(1)];
+
+            for (int row = 0; row < heightMap.GetLength(1); row++) {
+                for (int col = 0; col < heightMap.GetLength(0); col++) {
+                    var cubePosition = terrain.transform.position + new Vector3(
+                        col * cellSize + halfCellSize,
+                        heightMap[col, row] / 2f,
+                        row * cellSize + halfCellSize
+                    );
+            
+                    var debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    debugCube.transform.position = cubePosition;
+                    debugCube.transform.localScale = new Vector3(cellSize, heightMap[col, row], cellSize);
+
+                    _spawnedCubes[col, row] = debugCube;
                 }
             }
         }
