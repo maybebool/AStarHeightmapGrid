@@ -12,6 +12,7 @@ namespace Heightmap {
         [SerializeField] private float flyCostMultiplier = 1.25f;
         [SerializeField] private TerrainInfo terrainInfo;
         [SerializeField] private TextMeshProUGUI time;
+        
         private List<PathNode> _path = new();
         private PathNode _start;
         private PathNode _end;
@@ -36,8 +37,8 @@ namespace Heightmap {
         private void OnValidate() {
             samplesPerDimension =  Mathf.Clamp(Mathf.ClosestPowerOfTwo(samplesPerDimension), 2, int.MaxValue);
         }
-        
-        public void SpawnMarkers() {
+
+        private void SpawnMarkers() {
             if (_currentStartMarker) {
                 Destroy(_currentStartMarker);
             }
@@ -45,15 +46,15 @@ namespace Heightmap {
                 Destroy(_currentEndMarker);
             }
             
-            float cellSize = terrainInfo.CellSize;
+            var cellSize = terrainInfo.CellSize;
             
             var startPos = _pathGrid.GetWorldPositionFromNodeIndex(_start.Index, markerHeight, cellSize);
             var endPos = _pathGrid.GetWorldPositionFromNodeIndex(_end.Index, markerHeight, cellSize);
     
-            if (markerPrefab != null)
+            if (markerPrefab)
                 _currentStartMarker = Instantiate(markerPrefab, startPos, Quaternion.identity);
     
-            if (markerPrefab != null)
+            if (markerPrefab)
                 _currentEndMarker = Instantiate(markerPrefab, endPos, Quaternion.identity);
         }
         
@@ -66,7 +67,7 @@ namespace Heightmap {
             _currentCoroutine = StartCoroutine(SetColorToPathCoroutine());
         }
 
-        public List<PathNode> BirdBehaviorHeightAvoidingAStarPathSearch(PathNode start, PathNode end) {
+        public List<PathNode> CalculateAStarPath(PathNode start, PathNode end) {
             if (_pathGrid == null || !terrainInfo) {
                 return null;
             }
@@ -95,22 +96,10 @@ namespace Heightmap {
                         _closedNodes.Add(neighbour);
                         continue;
                     }
-                
-
+                    
                     if (!_closedNodes.Contains(neighbour)) {
-                        var isDiagonal = currentNode.Index.x != neighbour.Index.x &&
-                                         currentNode.Index.y != neighbour.Index.y;
+                        UpdateNeighborCosts(currentNode, neighbour, end, terrainHeights);
 
-                        var gCost = currentNode.GCost + (isDiagonal ? 1.4f : 1);
-                        var flyCost = (terrainHeights[neighbour.Index.x, neighbour.Index.y] -
-                                       terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier; 
-
-                        if (gCost + flyCost < neighbour.GCost) {
-                            neighbour.GCost = gCost;
-                            neighbour.FlyCost = flyCost;
-                            neighbour.HCost = Vector2.Distance(neighbour.Index, end.Index);
-                            neighbour.SourceNode = currentNode;
-                        }
                         if (!_openNodes.Contains(neighbour)) {
                             _openNodes.Add(neighbour);
                         }
@@ -121,18 +110,32 @@ namespace Heightmap {
             return null;
         
         }
+        
+        private void UpdateNeighborCosts(PathNode currentNode, PathNode neighbour, PathNode end, float[,] terrainHeights) {
+            var isDiagonal = currentNode.Index.x != neighbour.Index.x && currentNode.Index.y != neighbour.Index.y;
+            var gCost = currentNode.GCost + (isDiagonal ? 1.4f : 1f);
+            var flyCost = (terrainHeights[neighbour.Index.x, neighbour.Index.y] -
+                           terrainHeights[currentNode.Index.x, currentNode.Index.y]) * flyCostMultiplier;
+            
+            if (!(gCost + flyCost < neighbour.GCost)) return;
+            neighbour.GCost = gCost;
+            neighbour.FlyCost = flyCost;
+            neighbour.HCost = Vector2.Distance(neighbour.Index, end.Index);
+            neighbour.SourceNode = currentNode;
+        }
+
 
         private List<PathNode> GetFinalPath(PathNode endNode) {
             List<PathNode> finalPath = new();
             var pathNode = endNode;
             finalPath.Add(pathNode);
+            
             while (pathNode.SourceNode != null) {
                 pathNode = pathNode.SourceNode;
                 finalPath.Add(pathNode);
             }
 
             finalPath.Reverse();
-        
             _timer.Stop();
             var s = _timer.ElapsedMilliseconds;
             time.text = s.ToString();
@@ -167,7 +170,7 @@ namespace Heightmap {
         }
         
         private IEnumerator SetColorToPathCoroutine() {
-            _path = BirdBehaviorHeightAvoidingAStarPathSearch(_start, _end);
+            _path = CalculateAStarPath(_start, _end);
             SpawnMarkers();
             foreach (var node in _path) {
                 terrainInfo.SetColor(node.Index, Color.black);

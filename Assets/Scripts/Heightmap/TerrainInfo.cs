@@ -38,8 +38,7 @@ namespace Heightmap {
             SetHeatmap();
         }
 
-        public float[,] SampleHeights(int samplesPerDimension, bool inWorldUnits = true)
-        {
+        public float[,] SampleHeights(int samplesPerDimension, bool inWorldUnits = true) {
             var resolution = terrain.terrainData.heightmapResolution;
             var stepSize = resolution / samplesPerDimension;
             var heights = terrain.terrainData.GetHeights(0, 0, resolution, resolution);
