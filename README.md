@@ -8,7 +8,7 @@ The key was to reproduce the Algorithm used in Horizon Zero Dawn: https://www.gu
 ### How to Play
 - Press Enter to create new paths
 - Use the UI to clean the paths or rotate the camera
-![Demo](https://github.com/maybebool/AStarHeightmapGrid/blob/main/Recordings/Gif/output.gif)
+![A* Algorithm Demo](Recordings/Gif/output.gif)
 ![Example](https://github.com/maybebool/AStarHeightmapGrid/blob/main/Recordings/Image%20Sequence_003_0005.jpg)
 
 
