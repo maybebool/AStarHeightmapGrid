@@ -23,7 +23,6 @@ namespace Heightmap {
         private PathGrid _pathGrid;
         private Coroutine _currentCoroutine;
         
-        [FormerlySerializedAs("startMarkerPrefab")]
         [Header("Marker Settings")]
         [SerializeField] private GameObject markerPrefab;
         [SerializeField] private float markerHeight = 27.0f;
