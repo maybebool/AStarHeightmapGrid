@@ -6,7 +6,7 @@ The key was to reproduce the Algorithm used in Horizon Zero Dawn: https://www.gu
 
 
 ### How to Play
-- Press Enter to create new paths
+- Press 'Enter' to create new paths
 - Use the UI to clean the paths or rotate the camera
 ![A* Algorithm Demo](Recordings/Gif/output.gif)
 
