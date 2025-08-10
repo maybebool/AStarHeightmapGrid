@@ -101,11 +101,48 @@ namespace Heightmap {
                 cube.GetComponent<MeshRenderer>().material = heatMap;
             }
         }
+        
+        /// <summary>
+        /// Resets a cell back to the heatmap visualization
+        /// </summary>
+        /// <param name="index">The grid position of the cell to reset</param>
+        public void ResetCellColor(Vector2Int index) {
+            if (index.x >= 0 && index.x < _spawnedCubes.GetLength(0) && 
+                index.y >= 0 && index.y < _spawnedCubes.GetLength(1)) {
+                var mr = _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>();
+                mr.material = heatMap;
+            }
+        }
     
         public void SetColor(Vector2Int index, Color color) {
-            var mr = _spawnedCubes[index.x, index.y].GetComponent<MeshRenderer>();
-            mr.material = path;
-            mr.material.color = color;
+            if (index.x >= 0 && index.x < _spawnedCubes.GetLength(0) && 
+                index.y >= 0 && index.y < _spawnedCubes.GetLength(1)) {
+                GameObject cube = _spawnedCubes[index.x, index.y];
+                // Check if the cube still exists before accessing its components
+                if (cube != null) {
+                    MeshRenderer mr = cube.GetComponent<MeshRenderer>();
+                    if (mr != null && path != null) {
+                        mr.material = path;
+                        mr.material.color = color;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Resets all cells back to the heatmap visualization
+        /// </summary>
+        public void ResetAllCellColors() {
+            if (_spawnedCubes == null || heatMap == null) return;
+            
+            foreach (var cube in _spawnedCubes) {
+                if (cube != null) {
+                    MeshRenderer mr = cube.GetComponent<MeshRenderer>();
+                    if (mr != null) {
+                        mr.material = heatMap;
+                    }
+                }
+            }
         }
     }
 }

@@ -4,14 +4,21 @@ using System.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 namespace Heightmap {
     public class PathFinding : MonoBehaviour {
         
         [SerializeField] private int samplesPerDimension = 4;
+        public int SamplesPerDimension => samplesPerDimension;
         [SerializeField] private float flyCostMultiplier = 1.25f;
         [SerializeField] private TerrainInfo terrainInfo;
         [SerializeField] private TextMeshProUGUI time;
+        
+        // [Header("Visualization")]
+        // [SerializeField] private PathVisualizer pathVisualizer;
+        // [SerializeField] private bool use3DVisualization = true;
+        // [SerializeField] private bool keepOldVisualization = false;
         
         private List<PathNode> _path = new();
         private PathNode _start;
@@ -22,6 +29,7 @@ namespace Heightmap {
 
         private PathGrid _pathGrid;
         private Coroutine _currentCoroutine;
+        private float[,] _currentTerrainHeights;
         
         [Header("Marker Settings")]
         [SerializeField] private GameObject markerPrefab;
@@ -31,6 +39,15 @@ namespace Heightmap {
         
         private void Start() {
             _timer = new Stopwatch();
+            // Try to find PathVisualizer if not assigned
+            // if (!pathVisualizer && use3DVisualization) {
+            //     pathVisualizer = FindObjectOfType<PathVisualizer>();
+            //     if (!pathVisualizer) {
+            //         Debug.LogWarning("PathVisualizer not found. Creating one...");
+            //         GameObject visualizerObj = new GameObject("PathVisualizer");
+            //         pathVisualizer = visualizerObj.AddComponent<PathVisualizer>();
+            //     }
+            // }
         }
         
         private void OnValidate() {
@@ -85,11 +102,9 @@ namespace Heightmap {
             start.FlyCost = 0;
             _openNodes.Add(start);
             _timer.Start();
-            while (_openNodes.Count > 0)
-            {
+            while (_openNodes.Count > 0) {
                 var currentNode = GetLowestCostNode();
                 if (currentNode == end) {
-                
                     return GetFinalPath(currentNode);
                 }
 
@@ -103,7 +118,7 @@ namespace Heightmap {
                     }
                     
                     if (!_closedNodes.Contains(neighbour)) {
-                        UpdateNeighborCosts(currentNode, neighbour, end, terrainHeights);
+                        UpdateNeighborCosts(currentNode, neighbour, end, _currentTerrainHeights);
 
                         if (!_openNodes.Contains(neighbour)) {
                             _openNodes.Add(neighbour);

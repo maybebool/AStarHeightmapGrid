@@ -41,6 +41,19 @@ namespace Heightmap {
             return Grid[Random.Range(0, Grid.GetLength(0)), Random.Range(0, Grid.GetLength(1))];
         }
         
+        /// <summary>
+        /// Gets a specific node at the given grid position.
+        /// </summary>
+        /// <param name="gridPos">The grid position as a Vector2Int.</param>
+        /// <returns>The PathNode at the specified position, or null if out of bounds.</returns>
+        public PathNode GetNodeAt(Vector2Int gridPos) {
+            if (gridPos.x >= 0 && gridPos.x < Grid.GetLength(0) && 
+                gridPos.y >= 0 && gridPos.y < Grid.GetLength(1)) {
+                return Grid[gridPos.x, gridPos.y];
+            }
+            return null;
+        }
+        
         public Vector3 GetWorldPositionFromNodeIndex(Vector2Int index, float yOffset, float cellSize) {
             return _origin + new Vector3((index.x + 0.5f) * cellSize, yOffset, (index.y + 0.5f) * cellSize);
         }
