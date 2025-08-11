@@ -1,12 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Heightmap {
-    /// <summary>
-    /// Controls individual bird movement along a calculated path.
-    /// Follows dependency injection pattern - all dependencies are provided externally.
-    /// </summary>
-    public class BirdAgent : MonoBehaviour {
+namespace PathFinder {
+
+    public sealed class BirdAgent : MonoBehaviour {
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 10f;
         [SerializeField] private float rotationSpeed = 5f;
@@ -14,7 +11,7 @@ namespace Heightmap {
         [SerializeField] private bool instantRotationOnNewPath = true;
         
         [Header("Swarm Behavior")]
-        [SerializeField] private bool maintainOffset = true; // Keep the same offset throughout flight
+        [SerializeField] private bool maintainOffset = true;
         
         [Header("Visual Settings")]
         [SerializeField] private bool showDebugPath = false;
@@ -22,12 +19,12 @@ namespace Heightmap {
         
         // Path following state
         private List<Vector3> _worldPath;
-        private List<Vector3> _offsetPath; // The actual path this bird follows
+        private List<Vector3> _offsetPath;
         private int _currentPathIndex;
         private Vector3 _currentTarget;
         private bool _isMoving;
-        private Vector3 _pathOffset; // This bird's unique offset from the main path
-        private float _heightOffsetValue; // This bird's unique height offset
+        private Vector3 _pathOffset; 
+        private float _heightOffsetValue; 
         
         // Public properties
         public bool HasReachedDestination => !_isMoving || (_worldPath != null && _currentPathIndex >= _worldPath.Count);
@@ -209,7 +206,7 @@ namespace Heightmap {
         /// <summary>
         /// Called when the bird completes its path. Can be overridden for custom behavior.
         /// </summary>
-        protected virtual void OnPathComplete() {
+        private void OnPathComplete() {
             // Override in derived classes if needed
         }
         

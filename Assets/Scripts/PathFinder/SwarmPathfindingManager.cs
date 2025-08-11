@@ -1,17 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Heightmap;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Debug = UnityEngine.Debug;
 
 namespace PathFinder {
-    /// <summary>
-    /// Manages bird swarm pathfinding with interactive mouse controls.
-    /// Uses PathfindingService for calculations and BirdAgents for movement.
-    /// </summary>
+
     public class SwarmPathfindingManager : MonoBehaviour {
         [Header("Bird Swarm Settings")]
         [SerializeField] private GameObject birdPrefab;
@@ -20,9 +16,9 @@ namespace PathFinder {
         [SerializeField] private float birdHeightOffset = 10f;
         
         [Header("Swarm Behavior")]
-        [SerializeField] private float pathFollowRadius = 3f; // How far birds can deviate from main path
-        [SerializeField] private float heightVariation = 2f; // Vertical spread of the swarm
-        [SerializeField] private float staggerDelay = 0.5f; // Max delay between birds starting
+        [SerializeField] private float pathFollowRadius = 3f; 
+        [SerializeField] private float heightVariation = 2f; 
+        [SerializeField] private float staggerDelay = 0.5f; 
         
         [Header("Pathfinding Settings")]
         [SerializeField] private int samplesPerDimension = 4;

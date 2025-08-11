@@ -9,8 +9,8 @@ namespace PathFinder {
         private readonly TerrainInfo _terrainInfo;
         private readonly PathGrid _pathGrid;
         
-        private readonly List<PathNode> _openNodes = new List<PathNode>();
-        private readonly List<PathNode> _closedNodes = new List<PathNode>();
+        private readonly List<PathNode> _openNodes = new();
+        private readonly List<PathNode> _closedNodes = new();
         
         public PathfindingService(int gridSize, float flyCostMultiplier, TerrainInfo terrainInfo, Vector3 gridOrigin) {
             _gridSize = gridSize;
