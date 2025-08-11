@@ -1606,19 +1606,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a7b64db30c3a8449487580742ee516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  birdPrefab: {fileID: 7164912018873749393, guid: 2019b15c72af79049bf3efd84db8526c,
+  birdPrefab: {fileID: 273390498063459725, guid: 45627d335c362604cb4ed9fec42930b4,
     type: 3}
   numberOfBirds: 5
-  spawnRadius: 5
-  birdHeightOffset: 10
+  spawnRadius: 10
+  birdHeightOffset: 5
+  pathFollowRadius: 30
+  heightVariation: 10
+  staggerDelay: 0.5
   samplesPerDimension: 64
   flyCostMultiplier: 5000
   terrainInfo: {fileID: 1391463747}
   timeText: {fileID: 432191898}
   instructionText: {fileID: 1629026686}
-  markerPrefab: {fileID: 0}
-  markerHeight: 27
-  pathLineRenderer: {fileID: 2929694369385468357, guid: 03f721059a1341f499f8e388616a7ee0,
+  pathLineRendererPrefab: {fileID: 5802364014272410701, guid: 03f721059a1341f499f8e388616a7ee0,
     type: 3}
   pathLineHeight: 15
   pathMaterial: {fileID: 2100000, guid: 8a45e4f45d1f93840b3c46f8e7328c9b, type: 2}

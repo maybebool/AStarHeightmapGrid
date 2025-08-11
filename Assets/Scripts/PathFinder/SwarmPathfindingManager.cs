@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Heightmap;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -18,6 +19,11 @@ namespace PathFinder {
         [SerializeField] private float spawnRadius = 5f;
         [SerializeField] private float birdHeightOffset = 10f;
         
+        [Header("Swarm Behavior")]
+        [SerializeField] private float pathFollowRadius = 3f; // How far birds can deviate from main path
+        [SerializeField] private float heightVariation = 2f; // Vertical spread of the swarm
+        [SerializeField] private float staggerDelay = 0.5f; // Max delay between birds starting
+        
         [Header("Pathfinding Settings")]
         [SerializeField] private int samplesPerDimension = 4;
         [SerializeField] private float flyCostMultiplier = 1.25f;
@@ -28,9 +34,7 @@ namespace PathFinder {
         [SerializeField] private TextMeshProUGUI instructionText;
         
         [Header("Visualization Settings")]
-        [SerializeField] private GameObject markerPrefab;
-        [SerializeField] private float markerHeight = 27.0f;
-        [SerializeField] private LineRenderer pathLineRenderer;
+        [SerializeField] private GameObject pathLineRendererPrefab;
         [SerializeField] private float pathLineHeight = 15f;
         [SerializeField] private Material pathMaterial;
         [SerializeField] private Color pathColor = Color.blue;
@@ -41,6 +45,7 @@ namespace PathFinder {
         private List<BirdAgent> _birdAgents = new List<BirdAgent>();
         private Camera _mainCamera;
         private Stopwatch _timer;
+        private LineRenderer _pathLineRenderer; // Actual instance used at runtime
         
         // State management
         private Vector2Int _startGridPos;
@@ -63,7 +68,7 @@ namespace PathFinder {
             _mainCamera = Camera.main;
             _timer = new Stopwatch();
             
-            SpawnBirds();
+            // Don't spawn birds immediately - wait for first path
             SetupLineRenderer();
             UpdateInstructionText("Click on the terrain to set START point");
         }
@@ -83,7 +88,11 @@ namespace PathFinder {
             }
             
             if (birdPrefab == null) {
-                Debug.LogWarning("Bird prefab is not assigned. Birds will not spawn.");
+                Debug.LogError("Bird prefab is not assigned to SwarmPathfindingManager!");
+            }
+            
+            if (pathLineRendererPrefab == null) {
+                Debug.LogError("PathLineRendererPrefab is required! Please assign a GameObject with LineRenderer component.");
             }
         }
         
@@ -98,9 +107,7 @@ namespace PathFinder {
             }
         }
         
-        private void SpawnBirds() {
-            if (birdPrefab == null) return;
-            
+        private void SpawnBirds(Vector3 spawnPosition) {
             for (int i = 0; i < numberOfBirds; i++) {
                 GameObject birdObj = Instantiate(birdPrefab);
                 birdObj.name = $"Bird_{i:00}";
@@ -110,41 +117,54 @@ namespace PathFinder {
                     agent = birdObj.AddComponent<BirdAgent>();
                 }
                 
+                // Initialize swarm behavior for natural spreading
+                agent.InitializeSwarmBehavior(pathFollowRadius, heightVariation);
+                
                 _birdAgents.Add(agent);
                 
-                // Position birds in a circle formation
-                float angle = (360f / numberOfBirds) * i * Mathf.Deg2Rad;
+                // Position birds in a random spread around the spawn position
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float radius = Random.Range(0f, spawnRadius);
                 Vector3 offset = new Vector3(
-                    Mathf.Cos(angle) * spawnRadius,
-                    birdHeightOffset,
-                    Mathf.Sin(angle) * spawnRadius
+                    Mathf.Cos(angle) * radius,
+                    Random.Range(-heightVariation, heightVariation),
+                    Mathf.Sin(angle) * radius
                 );
                 
-                Vector3 centerPos = terrainInfo.transform.position + 
-                    new Vector3(terrainInfo.CellSize * samplesPerDimension / 2, 0, 
-                               terrainInfo.CellSize * samplesPerDimension / 2);
-                
-                birdObj.transform.position = centerPos + offset;
+                birdObj.transform.position = spawnPosition + offset;
             }
         }
         
         private void SetupLineRenderer() {
-            if (pathLineRenderer == null) {
-                GameObject lineObj = new GameObject("PathLineRenderer");
-                pathLineRenderer = lineObj.AddComponent<LineRenderer>();
+            // Instantiate the required LineRenderer prefab
+            GameObject lineObj = Instantiate(pathLineRendererPrefab);
+            lineObj.name = "PathLineRenderer_Instance";
+            _pathLineRenderer = lineObj.GetComponent<LineRenderer>();
+            
+            if (_pathLineRenderer == null) {
+                Debug.LogError("PathLineRendererPrefab doesn't have a LineRenderer component! Please assign a prefab with LineRenderer.");
+                return;
             }
             
-            pathLineRenderer.material = pathMaterial ?? new Material(Shader.Find("Sprites/Default"));
-            pathLineRenderer.startColor = pathColor;
-            pathLineRenderer.endColor = pathColor;
-            pathLineRenderer.startWidth = 2f;
-            pathLineRenderer.endWidth = 0.5f;
-            
-            if (pathLineWidthCurve == null || pathLineWidthCurve.keys.Length == 0) {
-                pathLineWidthCurve = AnimationCurve.Linear(0, 1, 1, 0.3f);
+            // Apply settings to the LineRenderer instance if they are configured
+            if (pathMaterial != null) {
+                _pathLineRenderer.material = pathMaterial;
             }
-            pathLineRenderer.widthCurve = pathLineWidthCurve;
-            pathLineRenderer.positionCount = 0;
+            
+            _pathLineRenderer.startColor = pathColor;
+            _pathLineRenderer.endColor = pathColor;
+            
+            // Only override width settings if not already configured in prefab
+            if (_pathLineRenderer.widthCurve == null || _pathLineRenderer.widthCurve.keys.Length == 0) {
+                if (pathLineWidthCurve != null && pathLineWidthCurve.keys.Length > 0) {
+                    _pathLineRenderer.widthCurve = pathLineWidthCurve;
+                } else {
+                    _pathLineRenderer.startWidth = 2f;
+                    _pathLineRenderer.endWidth = 0.5f;
+                }
+            }
+            
+            _pathLineRenderer.positionCount = 0;
         }
         
         private void HandleMouseInput() {
@@ -170,12 +190,8 @@ namespace PathFinder {
             _startGridPos = gridPos;
             _hasStartPoint = true;
             
-            // Create start marker
-            Vector3 markerPos = _pathfindingService.GridToWorldPosition(gridPos, markerHeight);
-            CreateMarker(ref _startMarker, markerPos, Color.black);
-            
             // Color the start cell
-            terrainInfo.SetColor(gridPos, Color.black);
+            terrainInfo.SetColor(gridPos, Color.green);
             _coloredCells.Add(gridPos);
             
             UpdateInstructionText("Click on the terrain to set END point");
@@ -196,12 +212,6 @@ namespace PathFinder {
             
             // Clear previous visualization
             ClearVisualization();
-            
-            // Create new markers
-            Vector3 startMarkerPos = _pathfindingService.GridToWorldPosition(_startGridPos, markerHeight);
-            Vector3 endMarkerPos = _pathfindingService.GridToWorldPosition(_endGridPos, markerHeight);
-            CreateMarker(ref _startMarker, startMarkerPos, Color.green);
-            CreateMarker(ref _endMarker, endMarkerPos, Color.red);
             
             // Color start and end cells
             terrainInfo.SetColor(_startGridPos, Color.green);
@@ -235,6 +245,15 @@ namespace PathFinder {
                 yield break;
             }
             
+            // Spawn birds at start position if this is the first path
+            if (!_isPathActive) {
+                // Get the world position of the start point with height
+                float[,] heights = terrainInfo.SampleHeights(samplesPerDimension);
+                Vector3 startWorldPos = _pathfindingService.GridToWorldPosition(_startGridPos, 
+                    heights[_startGridPos.x, _startGridPos.y] + birdHeightOffset);
+                SpawnBirds(startWorldPos);
+            }
+            
             _isPathActive = true;
             
             // Convert to world positions for visualization and bird movement
@@ -257,29 +276,35 @@ namespace PathFinder {
         }
         
         private void VisualizePath(List<Vector3> worldPath, float heightOffset) {
-            if (pathLineRenderer == null || worldPath == null) return;
+            if (_pathLineRenderer == null || worldPath == null) return;
             
-            pathLineRenderer.positionCount = worldPath.Count;
+            _pathLineRenderer.positionCount = worldPath.Count;
             
             for (int i = 0; i < worldPath.Count; i++) {
                 // Adjust height for line renderer visibility
                 Vector3 linePos = worldPath[i];
                 linePos.y = worldPath[i].y - birdHeightOffset + heightOffset;
-                pathLineRenderer.SetPosition(i, linePos);
+                _pathLineRenderer.SetPosition(i, linePos);
             }
         }
         
         private void SendBirdsAlongPath(List<Vector3> worldPath) {
+            // Birds only exist after first path is created
+            if (_birdAgents.Count == 0) return;
+            
+            // Determine if birds should teleport to start or continue from current position
+            bool shouldTeleport = false; // Never teleport since birds spawn at start
+            
             foreach (var bird in _birdAgents) {
-                // Add slight random delay for natural movement
-                float delay = Random.Range(0f, 0.5f);
-                StartCoroutine(DelayedBirdStart(bird, worldPath, delay));
+                // Add random delay for more natural, staggered movement
+                float delay = Random.Range(0f, staggerDelay);
+                StartCoroutine(DelayedBirdStart(bird, worldPath, delay, shouldTeleport));
             }
         }
         
-        private IEnumerator DelayedBirdStart(BirdAgent bird, List<Vector3> path, float delay) {
+        private IEnumerator DelayedBirdStart(BirdAgent bird, List<Vector3> path, float delay, bool teleportToStart) {
             yield return new WaitForSeconds(delay);
-            bird.SetPath(path, true);
+            bird.SetPath(path, teleportToStart);
         }
         
         private Vector3 GetAverageBirdPosition() {
@@ -300,25 +325,6 @@ namespace PathFinder {
             return activeCount > 0 ? sum / activeCount : terrainInfo.transform.position;
         }
         
-        private void CreateMarker(ref GameObject marker, Vector3 position, Color color) {
-            if (marker != null) {
-                Destroy(marker);
-            }
-            
-            if (markerPrefab != null) {
-                marker = Instantiate(markerPrefab, position, Quaternion.identity);
-                Renderer renderer = marker.GetComponent<Renderer>();
-                if (renderer != null) {
-                    renderer.material.color = color;
-                }
-            } else {
-                marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                marker.transform.position = position;
-                marker.transform.localScale = Vector3.one * 2f;
-                marker.GetComponent<Renderer>().material.color = color;
-            }
-        }
-        
         private void ClearVisualization() {
             // Reset terrain colors - with extra safety checks
             if (terrainInfo != null && Application.isPlaying) {
@@ -333,13 +339,14 @@ namespace PathFinder {
             _coloredCells.Clear();
             
             // Clear line renderer
-            if (pathLineRenderer != null) {
+            if (_pathLineRenderer != null) {
                 try {
-                    pathLineRenderer.positionCount = 0;
+                    _pathLineRenderer.positionCount = 0;
                 } catch (MissingReferenceException) {
                     // LineRenderer was destroyed - ignore
                 }
             }
+            
             
             // Destroy markers safely
             SafeDestroyMarker(ref _startMarker);
@@ -372,11 +379,13 @@ namespace PathFinder {
             
             ClearVisualization();
             
+            // Destroy all bird agents
             foreach (var bird in _birdAgents) {
                 if (bird != null) {
-                    bird.StopMovement();
+                    Destroy(bird.gameObject);
                 }
             }
+            _birdAgents.Clear();
             
             if (_pathVisualizationCoroutine != null) {
                 StopCoroutine(_pathVisualizationCoroutine);

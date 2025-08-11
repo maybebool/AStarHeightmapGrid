@@ -1,13 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PathFinder {
-
-    public sealed class BirdAgent : MonoBehaviour {
+namespace Heightmap {
+    /// <summary>
+    /// Controls individual bird movement along a calculated path.
+    /// Follows dependency injection pattern - all dependencies are provided externally.
+    /// </summary>
+    public class BirdAgent : MonoBehaviour {
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 10f;
         [SerializeField] private float rotationSpeed = 5f;
         [SerializeField] private float reachThreshold = 2f;
+        [SerializeField] private bool instantRotationOnNewPath = true;
+        
+        [Header("Swarm Behavior")]
+        [SerializeField] private bool maintainOffset = true; // Keep the same offset throughout flight
         
         [Header("Visual Settings")]
         [SerializeField] private bool showDebugPath = false;
@@ -15,14 +22,38 @@ namespace PathFinder {
         
         // Path following state
         private List<Vector3> _worldPath;
+        private List<Vector3> _offsetPath; // The actual path this bird follows
         private int _currentPathIndex;
         private Vector3 _currentTarget;
         private bool _isMoving;
+        private Vector3 _pathOffset; // This bird's unique offset from the main path
+        private float _heightOffsetValue; // This bird's unique height offset
         
         // Public properties
         public bool HasReachedDestination => !_isMoving || (_worldPath != null && _currentPathIndex >= _worldPath.Count);
         public Vector3 CurrentPosition => transform.position;
         public bool IsMoving => _isMoving;
+        
+        /// <summary>
+        /// Initializes the bird with a unique offset for swarm behavior.
+        /// </summary>
+        public void InitializeSwarmBehavior(float offsetRadius, float heightVar) {
+            if (offsetRadius > 0) {
+                // Generate a random offset in the XZ plane
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float radius = Random.Range(0f, offsetRadius);
+                _pathOffset = new Vector3(
+                    Mathf.Cos(angle) * radius,
+                    0,
+                    Mathf.Sin(angle) * radius
+                );
+            } else {
+                _pathOffset = Vector3.zero;
+            }
+            
+            // Add height variation
+            _heightOffsetValue = Random.Range(-heightVar, heightVar);
+        }
         
         /// <summary>
         /// Sets a pre-calculated world space path for the bird to follow.
@@ -37,14 +68,72 @@ namespace PathFinder {
             }
             
             _worldPath = new List<Vector3>(worldPath);
+            
+            // Create offset path for this bird
+            _offsetPath = CreateOffsetPath(_worldPath);
+            
             _currentPathIndex = 0;
             _isMoving = true;
             
             if (teleportToStart) {
-                transform.position = _worldPath[0];
+                transform.position = _offsetPath[0];
+            } else {
+                // Find the closest point on the new path to continue from
+                _currentPathIndex = FindClosestPathIndex(transform.position, _offsetPath);
             }
             
             UpdateCurrentTarget();
+        }
+        
+        /// <summary>
+        /// Creates an offset version of the path for this bird to follow.
+        /// </summary>
+        private List<Vector3> CreateOffsetPath(List<Vector3> originalPath) {
+            List<Vector3> offsetPath = new List<Vector3>(originalPath.Count);
+            
+            for (int i = 0; i < originalPath.Count; i++) {
+                Vector3 point = originalPath[i];
+                
+                if (maintainOffset) {
+                    // Apply consistent offset throughout the path
+                    point += _pathOffset;
+                    point.y += _heightOffsetValue;
+                } else {
+                    // Create dynamic offset that changes along the path
+                    float t = (float)i / (originalPath.Count - 1);
+                    Vector3 dynamicOffset = _pathOffset * Mathf.Sin(t * Mathf.PI * 2f + Time.time);
+                    point += dynamicOffset;
+                    point.y += _heightOffsetValue * Mathf.Cos(t * Mathf.PI + Time.time);
+                }
+                
+                offsetPath.Add(point);
+            }
+            
+            return offsetPath;
+        }
+        
+        /// <summary>
+        /// Finds the closest point on the path to the given position.
+        /// </summary>
+        private int FindClosestPathIndex(Vector3 position, List<Vector3> path) {
+            int closestIndex = 0;
+            float closestDistance = float.MaxValue;
+            
+            for (int i = 0; i < path.Count; i++) {
+                float distance = Vector3.Distance(position, path[i]);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = i;
+                }
+            }
+            
+            // Skip to next point if we're very close to the current closest point
+            // This prevents birds from going backwards
+            if (closestIndex < path.Count - 1 && closestDistance < reachThreshold) {
+                closestIndex++;
+            }
+            
+            return closestIndex;
         }
         
         /// <summary>
@@ -53,6 +142,7 @@ namespace PathFinder {
         public void StopMovement() {
             _isMoving = false;
             _worldPath = null;
+            _offsetPath = null;
             _currentPathIndex = 0;
         }
         
@@ -67,13 +157,13 @@ namespace PathFinder {
         /// Resumes movement if a path exists.
         /// </summary>
         public void ResumeMovement() {
-            if (_worldPath != null && _currentPathIndex < _worldPath.Count) {
+            if (_offsetPath != null && _currentPathIndex < _offsetPath.Count) {
                 _isMoving = true;
             }
         }
         
         private void Update() {
-            if (!_isMoving || _worldPath == null || _currentPathIndex >= _worldPath.Count) {
+            if (!_isMoving || _offsetPath == null || _currentPathIndex >= _offsetPath.Count) {
                 return;
             }
             
@@ -106,12 +196,20 @@ namespace PathFinder {
         private void UpdateCurrentTarget() {
             if (_currentPathIndex >= _worldPath.Count) return;
             _currentTarget = _worldPath[_currentPathIndex];
+            
+            // Immediately orient toward new target if enabled
+            if (instantRotationOnNewPath) {
+                Vector3 direction = (_currentTarget - transform.position).normalized;
+                if (direction != Vector3.zero) {
+                    transform.rotation = Quaternion.LookRotation(direction);
+                }
+            }
         }
         
         /// <summary>
         /// Called when the bird completes its path. Can be overridden for custom behavior.
         /// </summary>
-        private void OnPathComplete() {
+        protected virtual void OnPathComplete() {
             // Override in derived classes if needed
         }
         
