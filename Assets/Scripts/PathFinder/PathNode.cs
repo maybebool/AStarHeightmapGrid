@@ -1,7 +1,6 @@
 using UnityEngine;
 
-
-namespace Heightmap {
+namespace PathFinder {
     public class PathNode {
         public Vector2Int Index;
         public float GCost { get; set; }  

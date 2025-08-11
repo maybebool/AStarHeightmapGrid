@@ -1,16 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Heightmap {
-    /// <summary>
-    /// Controls individual bird movement along a calculated path.
-    /// Follows dependency injection pattern - all dependencies are provided externally.
-    /// </summary>
-    public class BirdAgent : MonoBehaviour {
+namespace PathFinder {
+
+    public sealed class BirdAgent : MonoBehaviour {
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 10f;
         [SerializeField] private float rotationSpeed = 5f;
-        [SerializeField] private float heightOffset = 5f;
         [SerializeField] private float reachThreshold = 2f;
         
         [Header("Visual Settings")]
@@ -115,7 +111,7 @@ namespace Heightmap {
         /// <summary>
         /// Called when the bird completes its path. Can be overridden for custom behavior.
         /// </summary>
-        protected virtual void OnPathComplete() {
+        private void OnPathComplete() {
             // Override in derived classes if needed
         }
         

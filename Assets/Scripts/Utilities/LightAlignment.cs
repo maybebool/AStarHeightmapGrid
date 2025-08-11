@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Heightmap {
+namespace Utilities {
     public class LightAlignment : MonoBehaviour {
         
         [SerializeField] private Transform anchor;  

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Debug = UnityEngine.Debug;
 
-namespace Heightmap {
+namespace PathFinder {
     /// <summary>
     /// Manages bird swarm pathfinding with interactive mouse controls.
     /// Uses PathfindingService for calculations and BirdAgents for movement.

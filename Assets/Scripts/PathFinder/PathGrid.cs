@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Heightmap {
+namespace PathFinder {
     public class PathGrid {
         
         private PathNode[,] Grid { get; }

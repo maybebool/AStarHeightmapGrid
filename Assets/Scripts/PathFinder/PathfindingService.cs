@@ -1,11 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Heightmap {
-    /// <summary>
-    /// Service class that handles A* pathfinding calculations.
-    /// Follows the Single Responsibility Principle - only handles pathfinding logic.
-    /// </summary>
+namespace PathFinder {
+
     public class PathfindingService {
         private readonly int _gridSize;
         private readonly float _flyCostMultiplier;
