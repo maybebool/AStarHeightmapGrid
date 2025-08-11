@@ -10,22 +10,10 @@ namespace Heightmap {
         [SerializeField] private int samplesPerSide = 64;
         [SerializeField] private Material heatMap;
         [SerializeField] private Material path;
-        [SerializeField] private Button cleanButton;
         private GameObject[,] _spawnedCubes;
         public float CellSize => terrain.terrainData.size.x / samplesPerSide;
         
-        private void OnEnable() {
-            Utils.BindButtonPlusParamsAction(cleanButton, CleanButtonClick);
-        }
-
-        private void OnDisable() {
-            cleanButton.onClick.RemoveAllListeners();
-        }
-
-        private void CleanButtonClick() {
-            SetHeatmap();
-        }
-
+        
         private void OnValidate() {
             if (terrain == null) {
                 terrain = GetComponent<Terrain>();
