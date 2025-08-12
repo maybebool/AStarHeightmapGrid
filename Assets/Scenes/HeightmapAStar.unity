@@ -1237,6 +1237,89 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!1001 &720869487
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1423933212981865754, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5579356288837705422, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: m_Name
+      value: PathGridDOTS
+      objectReference: {fileID: 0}
+    - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: gridWidth
+      value: 128
+      objectReference: {fileID: 0}
+    - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: gridHeight
+      value: 128
+      objectReference: {fileID: 0}
+    - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: terrainInfo
+      value: 
+      objectReference: {fileID: 1391463747}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ec5383e662a8dc247b04aa25e813290b, type: 3}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1433,7 +1516,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1521156744}
-  - component: {fileID: 1521156743}
+  - component: {fileID: 1521156745}
   m_Layer: 0
   m_Name: Swarm PathfindingManager
   m_TagString: Untagged
@@ -1441,60 +1524,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1521156743
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1521156742}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 55a7b64db30c3a8449487580742ee516, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  birdPrefab: {fileID: 273390498063459725, guid: 45627d335c362604cb4ed9fec42930b4,
-    type: 3}
-  numberOfBirds: 5
-  spawnRadius: 10
-  birdHeightOffset: 5
-  pathFollowRadius: 30
-  heightVariation: 10
-  staggerDelay: 0.5
-  samplesPerDimension: 64
-  flyCostMultiplier: 5000
-  terrainInfo: {fileID: 1391463747}
-  timeText: {fileID: 432191898}
-  instructionText: {fileID: 1629026686}
-  pathLineRendererPrefab: {fileID: 5802364014272410701, guid: 03f721059a1341f499f8e388616a7ee0,
-    type: 3}
-  pathLineHeight: 15
-  pathMaterial: {fileID: 2100000, guid: 8a45e4f45d1f93840b3c46f8e7328c9b, type: 2}
-  pathColor: {r: 1, g: 1, b: 1, a: 1}
-  pathLineWidthCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!4 &1521156744
 Transform:
   m_ObjectHideFlags: 0
@@ -1510,6 +1539,43 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1521156745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1521156742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55a7b64db30c3a8449487580742ee516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useDOTSPathfinding: 1
+  birdPrefab: {fileID: 273390498063459725, guid: 45627d335c362604cb4ed9fec42930b4,
+    type: 3}
+  numberOfBirds: 5
+  spawnRadius: 5
+  birdHeightOffset: 10
+  pathFollowRadius: 3
+  heightVariation: 2
+  staggerDelay: 0.5
+  samplesPerDimension: 128
+  flyCostMultiplier: 5000
+  terrainInfo: {fileID: 1391463747}
+  timeText: {fileID: 432191898}
+  instructionText: {fileID: 1629026686}
+  pathLineRendererPrefab: {fileID: 5802364014272410701, guid: 03f721059a1341f499f8e388616a7ee0,
+    type: 3}
+  pathLineHeight: 35
+  pathMaterial: {fileID: 2100000, guid: 8a45e4f45d1f93840b3c46f8e7328c9b, type: 2}
+  pathColor: {r: 0, g: 0, b: 0, a: 1}
+  pathLineWidthCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1629026685
 GameObject:
   m_ObjectHideFlags: 0
@@ -1934,6 +2000,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4409800385788854854, guid: b37f8ab4df6fb8a40868f80d4541709f,
+        type: 3}
+      propertyPath: samplesPerSide
+      value: 128
+      objectReference: {fileID: 0}
     - target: {fileID: 7533063004658216488, guid: b37f8ab4df6fb8a40868f80d4541709f,
         type: 3}
       propertyPath: m_Name
@@ -2007,3 +2078,4 @@ SceneRoots:
   - {fileID: 180551292}
   - {fileID: 1521156744}
   - {fileID: 657424590143750701}
+  - {fileID: 720869487}
