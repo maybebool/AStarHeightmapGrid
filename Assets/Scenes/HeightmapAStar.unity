@@ -1303,12 +1303,12 @@ PrefabInstance:
     - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
         type: 3}
       propertyPath: gridWidth
-      value: 128
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
         type: 3}
       propertyPath: gridHeight
-      value: 128
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
         type: 3}
@@ -1560,7 +1560,7 @@ MonoBehaviour:
   pathFollowRadius: 3
   heightVariation: 2
   staggerDelay: 0.5
-  samplesPerDimension: 128
+  samplesPerDimension: 64
   flyCostMultiplier: 5000
   terrainInfo: {fileID: 1391463747}
   timeText: {fileID: 432191898}
@@ -2003,7 +2003,7 @@ PrefabInstance:
     - target: {fileID: 4409800385788854854, guid: b37f8ab4df6fb8a40868f80d4541709f,
         type: 3}
       propertyPath: samplesPerSide
-      value: 128
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 7533063004658216488, guid: b37f8ab4df6fb8a40868f80d4541709f,
         type: 3}

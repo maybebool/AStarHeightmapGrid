@@ -1,9 +1,8 @@
-// Optimized DOTSPathfindingService.cs - Actually fast version
-
 using System.Collections.Generic;
 using System.Diagnostics;
 using PathFinderDOTS.Components;
 using PathFinderDOTS.Data;
+using PathFinderDOTS.Jobs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -142,7 +141,7 @@ namespace PathFinderDOTS.Services
             _closedSet.Clear();
             
             // Create and run the optimized job
-            var pathfindingJob = new OptimizedAStarJob
+            var pathfindingJob = new AStarPathfindingJob()
             {
                 Nodes = _gridData.Nodes,
                 Costs = _workingCosts,
@@ -252,193 +251,6 @@ namespace PathFinderDOTS.Services
                 _gridData.Dispose();
                 _isInitialized = false;
             }
-        }
-    }
-    
-    /// <summary>
-    /// Optimized A* Job with better memory access patterns
-    /// </summary>
-    [BurstCompile(CompileSynchronously = false, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
-    public struct OptimizedAStarJob : IJob
-    {
-        [ReadOnly] public NativeArray<PathNodeComponent> Nodes;
-        [NativeDisableParallelForRestriction]
-        public NativeArray<PathNodeCost> Costs;
-        [ReadOnly] public NativeArray<float> TerrainHeights;
-        
-        public int Width;
-        public int Height;
-        public int2 StartPos;
-        public int2 EndPos;
-        public float FlyCostMultiplier;
-        
-        public NativeList<int> ResultPath;
-        public NativeList<int> OpenList;
-        public NativeHashMap<int, byte> ClosedSet;
-        
-        public void Execute()
-        {
-            int startIndex = GetIndex(StartPos);
-            int endIndex = GetIndex(EndPos);
-            
-            // Early exit checks
-            if (Nodes[startIndex].IsWalkable == 0 || Nodes[endIndex].IsWalkable == 0)
-                return;
-            
-            // Initialize start node
-            Costs[startIndex] = new PathNodeCost
-            {
-                GCost = 0,
-                HCost = Heuristic(StartPos, EndPos),
-                FlyCost = 0,
-                ParentIndex = -1
-            };
-            
-            OpenList.Add(startIndex);
-            
-            int iterations = 0;
-            const int maxIterations = 5000;
-            
-            while (OpenList.Length > 0 && iterations++ < maxIterations)
-            {
-                // Get lowest cost node - optimized version
-                int currentIndex = PopLowestCostNode();
-                
-                if (currentIndex == endIndex)
-                {
-                    ReconstructPath(currentIndex);
-                    return;
-                }
-                
-                ClosedSet.TryAdd(currentIndex, 1);
-                ProcessNeighborsOptimized(currentIndex, endIndex);
-            }
-        }
-        
-        [BurstCompile]
-        private void ProcessNeighborsOptimized(int currentIndex, int endIndex)
-        {
-            int2 currentPos = GetGridPosition(currentIndex);
-            float currentHeight = TerrainHeights[currentIndex];
-            var currentCost = Costs[currentIndex];
-            
-            // Unroll the neighbor loop for better performance
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(-1, -1), 1.414f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(0, -1), 1.0f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(1, -1), 1.414f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(-1, 0), 1.0f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(1, 0), 1.0f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(-1, 1), 1.414f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(0, 1), 1.0f, endIndex);
-            CheckNeighbor(currentPos, currentHeight, currentCost, new int2(1, 1), 1.414f, endIndex);
-        }
-        
-        [BurstCompile]
-        private void CheckNeighbor(int2 currentPos, float currentHeight, PathNodeCost currentCost, 
-                                   int2 offset, float movementCost, int endIndex)
-        {
-            int2 neighborPos = currentPos + offset;
-            
-            if (neighborPos.x < 0 || neighborPos.x >= Width || 
-                neighborPos.y < 0 || neighborPos.y >= Height)
-                return;
-            
-            int neighborIndex = GetIndex(neighborPos);
-            
-            if (Nodes[neighborIndex].IsWalkable == 0)
-                return;
-            
-            if (ClosedSet.ContainsKey(neighborIndex))
-                return;
-            
-            float heightDiff = TerrainHeights[neighborIndex] - currentHeight;
-            float flyCost = math.max(0, heightDiff * FlyCostMultiplier);
-            float newGCost = currentCost.GCost + movementCost + flyCost;
-            
-            var neighborCost = Costs[neighborIndex];
-            
-            if (newGCost < neighborCost.GCost)
-            {
-                neighborCost.GCost = newGCost;
-                neighborCost.FlyCost = flyCost;
-                neighborCost.HCost = Heuristic(neighborPos, GetGridPosition(endIndex));
-                neighborCost.ParentIndex = GetIndex(currentPos);
-                Costs[neighborIndex] = neighborCost;
-                
-                // Add to open list if not already there
-                if (!IsInOpenList(neighborIndex))
-                {
-                    OpenList.Add(neighborIndex);
-                }
-            }
-        }
-        
-        [BurstCompile]
-        private int PopLowestCostNode()
-        {
-            int bestIndex = 0;
-            int bestNodeIndex = OpenList[0];
-            float lowestCost = Costs[bestNodeIndex].FCost;
-            
-            for (int i = 1; i < OpenList.Length; i++)
-            {
-                int nodeIndex = OpenList[i];
-                float cost = Costs[nodeIndex].FCost;
-                
-                if (cost < lowestCost)
-                {
-                    lowestCost = cost;
-                    bestIndex = i;
-                    bestNodeIndex = nodeIndex;
-                }
-            }
-            
-            OpenList.RemoveAtSwapBack(bestIndex);
-            return bestNodeIndex;
-        }
-        
-        [BurstCompile]
-        private bool IsInOpenList(int nodeIndex)
-        {
-            for (int i = 0; i < OpenList.Length; i++)
-            {
-                if (OpenList[i] == nodeIndex)
-                    return true;
-            }
-            return false;
-        }
-        
-        [BurstCompile]
-        private void ReconstructPath(int endIndex)
-        {
-            int currentIndex = endIndex;
-            int safety = 0;
-            
-            while (currentIndex != -1 && safety++ < 1000)
-            {
-                ResultPath.Add(currentIndex);
-                currentIndex = Costs[currentIndex].ParentIndex;
-            }
-            
-            // Reverse in place
-            int halfLength = ResultPath.Length / 2;
-            for (int i = 0; i < halfLength; i++)
-            {
-                (ResultPath[i], ResultPath[ResultPath.Length - 1 - i]) = (ResultPath[ResultPath.Length - 1 - i], ResultPath[i]);
-            }
-        }
-        
-        [BurstCompile]
-        private int GetIndex(int2 pos) => pos.y * Width + pos.x;
-        
-        [BurstCompile]
-        private int2 GetGridPosition(int index) => new int2(index % Width, index / Width);
-        
-        [BurstCompile]
-        private float Heuristic(int2 a, int2 b)
-        {
-            // Manhattan distance is faster than Euclidean
-            return math.abs(a.x - b.x) + math.abs(a.y - b.y);
         }
     }
 }
