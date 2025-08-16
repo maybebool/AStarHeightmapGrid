@@ -3,6 +3,7 @@ using System.Diagnostics;
 using PathFinderDOTS.Components;
 using PathFinderDOTS.Data;
 using PathFinderDOTS.Jobs;
+using TerrainUtils;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -17,7 +18,7 @@ namespace PathFinderDOTS.Services {
         private int _gridSize;
         private float _cellSize;
         private float _flyCostMultiplier;
-        private PathFinder.TerrainInfo _terrainInfo;
+        private TerrainInfo _terrainInfo;
         
         private NativeArray<PathNodeComponent> _workingNodes;
         private NativeArray<PathNodeCost> _workingCosts;
@@ -27,7 +28,7 @@ namespace PathFinderDOTS.Services {
         private Stopwatch _stopwatch = new();
 
         public void Initialize(int gridSize, float cellSize, float flyCostMultiplier,
-            PathFinder.TerrainInfo terrainInfo) {
+            TerrainInfo terrainInfo) {
             _gridSize = gridSize;
             _cellSize = cellSize;
             _flyCostMultiplier = flyCostMultiplier;

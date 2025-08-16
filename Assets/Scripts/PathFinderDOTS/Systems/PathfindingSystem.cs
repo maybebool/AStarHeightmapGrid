@@ -1,6 +1,7 @@
 using PathFinderDOTS.Authoring;
 using PathFinderDOTS.Components;
 using PathFinderDOTS.Data;
+using TerrainUtils;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -45,7 +46,7 @@ namespace PathFinderDOTS.Systems {
             _isInitialized = true;
         }
 
-        private void SampleTerrainHeights(PathFinder.TerrainInfo terrainInfo, ref PathGridData grid) {
+        private void SampleTerrainHeights(TerrainInfo terrainInfo, ref PathGridData grid) {
             var heights = terrainInfo.SampleHeights(grid.Width, true);
 
             for (int y = 0; y < grid.Height; y++) {

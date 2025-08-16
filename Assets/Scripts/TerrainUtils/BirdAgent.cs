@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PathFinder {
+namespace TerrainUtils {
 
     public sealed class BirdAgent : MonoBehaviour {
         [Header("Movement Settings")]

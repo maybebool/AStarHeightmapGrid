@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Debug = UnityEngine.Debug;
 
-namespace PathFinder {
+namespace TerrainUtils {
     public class SwarmPathfindingManager : MonoBehaviour {
 
         [Header("Bird Swarm Settings")] 

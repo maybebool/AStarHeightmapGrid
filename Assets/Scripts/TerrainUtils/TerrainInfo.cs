@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace PathFinder {
+namespace TerrainUtils {
     [RequireComponent(typeof(Terrain))]
     public class TerrainInfo : MonoBehaviour
     {
