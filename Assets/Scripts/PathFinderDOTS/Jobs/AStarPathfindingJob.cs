@@ -5,10 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace PathFinderDOTS.Jobs {
-    /// <summary>
-    /// A* pathfinding job with properly scaled costs based on actual world distances
-    /// Now uses IsProcessed flag instead of ClosedSet for better performance
-    /// </summary>
+
     [BurstCompile(
         CompileSynchronously = false,
         FloatMode = FloatMode.Fast,
@@ -17,29 +14,24 @@ namespace PathFinderDOTS.Jobs {
         OptimizeFor = OptimizeFor.Performance
     )]
     public struct AStarPathfindingJob : IJob {
-        // Grid data
+        
         [NativeDisableParallelForRestriction]
-        public NativeArray<PathNodeComponent> Nodes; // Now mutable for IsProcessed flag
+        public NativeArray<PathNodeComponent> Nodes;
 
         [NativeDisableParallelForRestriction] public NativeArray<PathNodeCost> Costs;
         [ReadOnly] public NativeArray<float> TerrainHeights;
-
-        // Grid configuration
+        
         public int Width;
         public int Height;
         public float CellSize;
-
-        // Pathfinding parameters
+        
         public int2 StartPos;
         public int2 EndPos;
         public float FlyCostMultiplier;
-
-        // Result and working data
+        
         public NativeList<int> ResultPath;
         public NativeList<int> OpenList;
-        // Removed ClosedSet - using IsProcessed flag instead
-
-        // Movement cost constants - now these will be multiplied by actual distances
+        
         private const float DIAGONAL_FACTOR = 1.414f; // sqrt(2)
         private const float CARDINAL_FACTOR = 1.0f;
         private const float OCTILE_FACTOR = 0.414f; // (sqrt(2) - 1)
@@ -48,21 +40,19 @@ namespace PathFinderDOTS.Jobs {
             if (!IsValidPosition(StartPos) || !IsValidPosition(EndPos))
                 return;
 
-            int startIndex = GetIndex(StartPos.x, StartPos.y);
-            int endIndex = GetIndex(EndPos.x, EndPos.y);
+            var startIndex = GetIndex(StartPos.x, StartPos.y);
+            var endIndex = GetIndex(EndPos.x, EndPos.y);
 
             if (Nodes[startIndex].IsWalkable == 0 || Nodes[endIndex].IsWalkable == 0)
                 return;
-
-            // Initialize start node - scale heuristic by cell size
+            
             Costs[startIndex] = new PathNodeCost {
                 GCost = 0,
                 HCost = OctileDistance(StartPos, EndPos) * CellSize,
                 FlyCost = 0,
                 ParentIndex = -1
             };
-
-            // Mark start node as in open list
+            
             var startNode = Nodes[startIndex];
             startNode.IsInOpenList = 1;
             Nodes[startIndex] = startNode;
@@ -70,11 +60,11 @@ namespace PathFinderDOTS.Jobs {
             OpenList.Clear();
             OpenList.Add(startIndex);
 
-            int iterations = 0;
-            int maxIterations = Width * Height;
+            var iterations = 0;
+            var maxIterations = Width * Height;
 
             while (OpenList.Length > 0 && iterations++ < maxIterations) {
-                int currentIndex = PopLowestCostNode();
+                var currentIndex = PopLowestCostNode();
 
                 if (currentIndex == endIndex) {
                     ReconstructPath(currentIndex);
@@ -127,22 +117,22 @@ namespace PathFinderDOTS.Jobs {
             int2 horizontalPos = currentPos + horizontal;
             int2 verticalPos = currentPos + vertical;
 
-            bool horizontalWalkable = false;
-            bool verticalWalkable = false;
+            var horizontalWalkable = false;
+            var verticalWalkable = false;
 
             if (IsValidPosition(horizontalPos)) {
-                int horizontalIndex = GetIndex(horizontalPos.x, horizontalPos.y);
+                var horizontalIndex = GetIndex(horizontalPos.x, horizontalPos.y);
                 horizontalWalkable = Nodes[horizontalIndex].IsWalkable == 1;
             }
 
             if (IsValidPosition(verticalPos)) {
-                int verticalIndex = GetIndex(verticalPos.x, verticalPos.y);
+                var verticalIndex = GetIndex(verticalPos.x, verticalPos.y);
                 verticalWalkable = Nodes[verticalIndex].IsWalkable == 1;
             }
 
             if (horizontalWalkable || verticalWalkable) {
                 // Scale diagonal movement by actual world distance
-                float diagonalDistance = DIAGONAL_FACTOR * CellSize;
+                var diagonalDistance = DIAGONAL_FACTOR * CellSize;
                 CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost,
                     offset, diagonalDistance, endIndex);
             }
@@ -151,35 +141,31 @@ namespace PathFinderDOTS.Jobs {
         [BurstCompile]
         private void CheckNeighbor(int2 currentPos, int currentIndex, float currentHeight,
             float currentGCost, int2 offset, float movementCost, int endIndex) {
+            
             int2 neighborPos = currentPos + offset;
 
             if (!IsValidPosition(neighborPos))
                 return;
-
-            int neighborIndex = GetIndex(neighborPos.x, neighborPos.y);
-
+            
+            var neighborIndex = GetIndex(neighborPos.x, neighborPos.y);
             var neighborNode = Nodes[neighborIndex];
 
-            // Skip if not walkable or already processed
             if (neighborNode.IsWalkable == 0 || neighborNode.IsProcessed == 1)
                 return;
 
-            // Calculate costs with proper scaling
-            float heightDiff = TerrainHeights[neighborIndex] - currentHeight;
-
-            // Fly cost calculation
+            var heightDiff = TerrainHeights[neighborIndex] - currentHeight;
             float flyCost = 0;
+            
             if (heightDiff > 0) {
                 flyCost = heightDiff * FlyCostMultiplier;
             }
 
-            float newGCost = currentGCost + movementCost + flyCost;
-
-            float existingGCost = Costs[neighborIndex].GCost;
+            var newGCost = currentGCost + movementCost + flyCost;
+            var existingGCost = Costs[neighborIndex].GCost;
 
             if (newGCost < existingGCost) {
                 // Scale heuristic by cell size for consistency
-                float hCost = OctileDistance(neighborPos, GetGridPosition(endIndex)) * CellSize;
+                var hCost = OctileDistance(neighborPos, GetGridPosition(endIndex)) * CellSize;
 
                 Costs[neighborIndex] = new PathNodeCost {
                     GCost = newGCost,
@@ -187,8 +173,7 @@ namespace PathFinderDOTS.Jobs {
                     FlyCost = flyCost,
                     ParentIndex = currentIndex
                 };
-
-                // Add to open list if not already there
+                
                 if (neighborNode.IsInOpenList == 0) {
                     neighborNode.IsInOpenList = 1;
                     Nodes[neighborIndex] = neighborNode;
@@ -202,13 +187,13 @@ namespace PathFinderDOTS.Jobs {
             if (OpenList.Length == 0)
                 return -1;
 
-            int bestIndex = 0;
-            int bestNodeIndex = OpenList[0];
-            float lowestCost = Costs[bestNodeIndex].FCost;
+            var bestIndex = 0;
+            var bestNodeIndex = OpenList[0];
+            var lowestCost = Costs[bestNodeIndex].FCost;
 
             for (int i = 1; i < OpenList.Length; i++) {
-                int nodeIndex = OpenList[i];
-                float cost = Costs[nodeIndex].FCost;
+                var nodeIndex = OpenList[i];
+                var cost = Costs[nodeIndex].FCost;
 
                 if (cost < lowestCost || (math.abs(cost - lowestCost) < 0.001f &&
                                           Costs[nodeIndex].HCost < Costs[bestNodeIndex].HCost)) {
@@ -226,8 +211,8 @@ namespace PathFinderDOTS.Jobs {
         private void ReconstructPath(int endIndex) {
             ResultPath.Clear();
 
-            int currentIndex = endIndex;
-            int safety = 0;
+            var currentIndex = endIndex;
+            var safety = 0;
             const int maxPathLength = 10000;
 
             while (currentIndex != -1 && safety++ < maxPathLength) {
@@ -235,10 +220,10 @@ namespace PathFinderDOTS.Jobs {
                 currentIndex = Costs[currentIndex].ParentIndex;
             }
 
-            int halfLength = ResultPath.Length >> 1;
+            var halfLength = ResultPath.Length >> 1;
             for (int i = 0; i < halfLength; i++) {
-                int temp = ResultPath[i];
-                int swapIndex = ResultPath.Length - 1 - i;
+                var temp = ResultPath[i];
+                var swapIndex = ResultPath.Length - 1 - i;
                 ResultPath[i] = ResultPath[swapIndex];
                 ResultPath[swapIndex] = temp;
             }
@@ -250,11 +235,11 @@ namespace PathFinderDOTS.Jobs {
         /// </summary>
         [BurstCompile]
         private float OctileDistance(int2 a, int2 b) {
-            int dx = math.abs(a.x - b.x);
-            int dy = math.abs(a.y - b.y);
+            var dx = math.abs(a.x - b.x);
+            var dy = math.abs(a.y - b.y);
 
-            int max = math.max(dx, dy);
-            int min = math.min(dx, dy);
+            var max = math.max(dx, dy);
+            var min = math.min(dx, dy);
             return max + OCTILE_FACTOR * min;
         }
 

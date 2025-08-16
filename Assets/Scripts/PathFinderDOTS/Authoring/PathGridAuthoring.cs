@@ -12,7 +12,7 @@ namespace PathFinderDOTS.Authoring {
 
         [Header("Terrain Reference")] public TerrainInfo terrainInfo;
 
-        class Baker : Baker<PathGridAuthoring> {
+        private class Baker : Baker<PathGridAuthoring> {
             public override void Bake(PathGridAuthoring authoring) {
                 var entity = GetEntity(TransformUsageFlags.None);
 
@@ -25,8 +25,7 @@ namespace PathFinderDOTS.Authoring {
                 });
 
                 AddComponent(entity, new PathGridTag());
-
-                // Add a managed component to hold the terrain reference
+                
                 AddComponentObject(entity, new ManagedTerrainReference {
                     TerrainInfo = authoring.terrainInfo
                 });

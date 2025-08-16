@@ -17,7 +17,6 @@ namespace PathFinder {
         [SerializeField] private bool showDebugPath = false;
         [SerializeField] private Color debugPathColor = Color.cyan;
         
-        // Path following state
         private List<Vector3> _worldPath;
         private List<Vector3> _offsetPath;
         private int _currentPathIndex;
@@ -45,7 +44,6 @@ namespace PathFinder {
                 _pathOffset = Vector3.zero;
             }
             
-            // Add height variation
             _heightOffsetValue = Random.Range(-heightVar, heightVar);
         }
         
@@ -62,8 +60,7 @@ namespace PathFinder {
             }
             
             _worldPath = new List<Vector3>(worldPath);
-            
-            // Create offset path for this bird
+         
             _offsetPath = CreateOffsetPath(_worldPath);
             
             _currentPathIndex = 0;
@@ -72,7 +69,6 @@ namespace PathFinder {
             if (teleportToStart) {
                 transform.position = _offsetPath[0];
             } else {
-                // Find the closest point on the new path to continue from
                 _currentPathIndex = FindClosestPathIndex(transform.position, _offsetPath);
             }
             
@@ -83,10 +79,10 @@ namespace PathFinder {
         /// Creates an offset version of the path for this bird to follow.
         /// </summary>
         private List<Vector3> CreateOffsetPath(List<Vector3> originalPath) {
-            List<Vector3> offsetPath = new List<Vector3>(originalPath.Count);
+            var offsetPath = new List<Vector3>(originalPath.Count);
             
             for (int i = 0; i < originalPath.Count; i++) {
-                Vector3 point = originalPath[i];
+                var point = originalPath[i];
                 
                 if (maintainOffset) {
                     // Apply consistent offset throughout the path
@@ -94,8 +90,8 @@ namespace PathFinder {
                     point.y += _heightOffsetValue;
                 } else {
                     // Create dynamic offset that changes along the path
-                    float t = (float)i / (originalPath.Count - 1);
-                    Vector3 dynamicOffset = _pathOffset * Mathf.Sin(t * Mathf.PI * 2f + Time.time);
+                    var t = (float)i / (originalPath.Count - 1);
+                    var dynamicOffset = _pathOffset * Mathf.Sin(t * Mathf.PI * 2f + Time.time);
                     point += dynamicOffset;
                     point.y += _heightOffsetValue * Mathf.Cos(t * Mathf.PI + Time.time);
                 }
@@ -110,19 +106,17 @@ namespace PathFinder {
         /// Finds the closest point on the path to the given position.
         /// </summary>
         private int FindClosestPathIndex(Vector3 position, List<Vector3> path) {
-            int closestIndex = 0;
-            float closestDistance = float.MaxValue;
+            var closestIndex = 0;
+            var closestDistance = float.MaxValue;
             
             for (int i = 0; i < path.Count; i++) {
-                float distance = Vector3.Distance(position, path[i]);
+                var distance = Vector3.Distance(position, path[i]);
                 if (distance < closestDistance) {
                     closestDistance = distance;
                     closestIndex = i;
                 }
             }
             
-            // Skip to next point if we're very close to the current closest point
-            // This prevents birds from going backwards
             if (closestIndex < path.Count - 1 && closestDistance < reachThreshold) {
                 closestIndex++;
             }
@@ -166,12 +160,12 @@ namespace PathFinder {
         
         private void MoveAlongPath() {
             // Move towards current target
-            Vector3 direction = (_currentTarget - transform.position).normalized;
+            var direction = (_currentTarget - transform.position).normalized;
             transform.position = Vector3.MoveTowards(transform.position, _currentTarget, moveSpeed * Time.deltaTime);
             
             // Rotate towards movement direction
             if (direction != Vector3.zero) {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                var targetRotation = Quaternion.LookRotation(direction);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
             
@@ -193,7 +187,7 @@ namespace PathFinder {
             
             // Immediately orient toward new target if enabled
             if (instantRotationOnNewPath) {
-                Vector3 direction = (_currentTarget - transform.position).normalized;
+                var direction = (_currentTarget - transform.position).normalized;
                 if (direction != Vector3.zero) {
                     transform.rotation = Quaternion.LookRotation(direction);
                 }

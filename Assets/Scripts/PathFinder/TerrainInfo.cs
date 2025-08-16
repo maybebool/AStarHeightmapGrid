@@ -103,11 +103,11 @@ namespace PathFinder {
         public void SetColor(Vector2Int index, Color color) {
             if (index.x >= 0 && index.x < _spawnedCubes.GetLength(0) && 
                 index.y >= 0 && index.y < _spawnedCubes.GetLength(1)) {
-                GameObject cube = _spawnedCubes[index.x, index.y];
+                var cube = _spawnedCubes[index.x, index.y];
                 // Check if the cube still exists before accessing its components
-                if (cube != null) {
+                if (cube) {
                     MeshRenderer mr = cube.GetComponent<MeshRenderer>();
-                    if (mr != null && path != null) {
+                    if (mr && path) {
                         mr.material = path;
                         mr.material.color = color;
                     }
@@ -123,7 +123,7 @@ namespace PathFinder {
             
             foreach (var cube in _spawnedCubes) {
                 if (cube != null) {
-                    MeshRenderer mr = cube.GetComponent<MeshRenderer>();
+                    var mr = cube.GetComponent<MeshRenderer>();
                     if (mr != null) {
                         mr.material = heatMap;
                     }
