@@ -1,4 +1,3 @@
-// AStarPathfindingJob.cs - Optimized with Octile Distance
 using PathFinderDOTS.Components;
 using Unity.Burst;
 using Unity.Collections;
@@ -8,19 +7,18 @@ using Unity.Mathematics;
 namespace PathFinderDOTS.Jobs
 {
     /// <summary>
-    /// Highly optimized A* pathfinding job using Octile distance
-    /// Provides the best balance between performance and path quality for grid-based movement
+    /// A* pathfinding job with properly scaled costs based on actual world distances
     /// </summary>
     [BurstCompile(
-        CompileSynchronously = false,        // Allow async compilation for better editor performance
-        FloatMode = FloatMode.Fast,          // Faster math at slight precision cost
-        FloatPrecision = FloatPrecision.Standard, // Standard precision for Octile calculations
-        DisableSafetyChecks = true,          // Disable in builds for performance
-        OptimizeFor = OptimizeFor.Performance // Prioritize speed over code size
+        CompileSynchronously = false,
+        FloatMode = FloatMode.Fast,
+        FloatPrecision = FloatPrecision.Standard,
+        DisableSafetyChecks = true,
+        OptimizeFor = OptimizeFor.Performance
     )]
     public struct AStarPathfindingJob : IJob
     {
-        // Grid data - separated to avoid aliasing
+        // Grid data
         [ReadOnly] public NativeArray<PathNodeComponent> Nodes;
         [NativeDisableParallelForRestriction] 
         public NativeArray<PathNodeCost> Costs;
@@ -29,40 +27,39 @@ namespace PathFinderDOTS.Jobs
         // Grid configuration
         public int Width;
         public int Height;
+        public float CellSize; // ADD THIS: Actual world size of each cell
         
         // Pathfinding parameters
         public int2 StartPos;
         public int2 EndPos;
-        public float FlyCostMultiplier;
+        public float FlyCostMultiplier; // Now this can be a reasonable value like 2.0-5.0
         
         // Result and working data
         public NativeList<int> ResultPath;
         public NativeList<int> OpenList;
         public NativeHashMap<int, byte> ClosedSet;
         
-        // Constants for diagonal movement
-        private const float DIAGONAL_COST = 1.414f;
-        private const float CARDINAL_COST = 1.0f;
+        // Movement cost constants - now these will be multiplied by actual distances
+        private const float DIAGONAL_FACTOR = 1.414f; // sqrt(2)
+        private const float CARDINAL_FACTOR = 1.0f;
         private const float OCTILE_FACTOR = 0.414f; // (sqrt(2) - 1)
         
         public void Execute()
         {
-            // Quick validation
             if (!IsValidPosition(StartPos) || !IsValidPosition(EndPos))
                 return;
             
             int startIndex = GetIndex(StartPos);
             int endIndex = GetIndex(EndPos);
             
-            // Early exit if start or end are unwalkable
             if (Nodes[startIndex].IsWalkable == 0 || Nodes[endIndex].IsWalkable == 0)
                 return;
             
-            // Initialize start node with Octile distance heuristic
+            // Initialize start node - scale heuristic by cell size
             Costs[startIndex] = new PathNodeCost
             {
                 GCost = 0,
-                HCost = OctileDistance(StartPos, EndPos),
+                HCost = OctileDistance(StartPos, EndPos) * CellSize,
                 FlyCost = 0,
                 ParentIndex = -1
             };
@@ -72,24 +69,19 @@ namespace PathFinderDOTS.Jobs
             OpenList.Add(startIndex);
             
             int iterations = 0;
-            int maxIterations = Width * Height / 2; // Reasonable upper bound
+            int maxIterations = Width * Height;
             
             while (OpenList.Length > 0 && iterations++ < maxIterations)
             {
-                // Get and remove lowest cost node efficiently
                 int currentIndex = PopLowestCostNode();
                 
-                // Goal check
                 if (currentIndex == endIndex)
                 {
                     ReconstructPath(currentIndex);
                     return;
                 }
                 
-                // Add to closed set
                 ClosedSet.TryAdd(currentIndex, 1);
-                
-                // Process all 8 neighbors
                 ProcessNeighborsOptimized(currentIndex, endIndex);
             }
         }
@@ -101,18 +93,59 @@ namespace PathFinderDOTS.Jobs
             float currentHeight = TerrainHeights[currentIndex];
             float currentGCost = Costs[currentIndex].GCost;
             
-            // Unrolled neighbor checks for better CPU branch prediction
-            // Process diagonals first (often better paths)
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(-1, -1), DIAGONAL_COST, endIndex);
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(1, -1), DIAGONAL_COST, endIndex);
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(-1, 1), DIAGONAL_COST, endIndex);
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(1, 1), DIAGONAL_COST, endIndex);
+            // Process cardinal directions first
+            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                         new int2(0, -1), CARDINAL_FACTOR * CellSize, endIndex);
+            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                         new int2(-1, 0), CARDINAL_FACTOR * CellSize, endIndex);
+            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                         new int2(1, 0), CARDINAL_FACTOR * CellSize, endIndex);
+            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                         new int2(0, 1), CARDINAL_FACTOR * CellSize, endIndex);
             
-            // Then process cardinal directions
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(0, -1), CARDINAL_COST, endIndex);
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(-1, 0), CARDINAL_COST, endIndex);
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(1, 0), CARDINAL_COST, endIndex);
-            CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, new int2(0, 1), CARDINAL_COST, endIndex);
+            // Then process diagonals with corner-cutting check
+            CheckDiagonalNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                                 new int2(-1, -1), endIndex);
+            CheckDiagonalNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                                 new int2(1, -1), endIndex);
+            CheckDiagonalNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                                 new int2(-1, 1), endIndex);
+            CheckDiagonalNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                                 new int2(1, 1), endIndex);
+        }
+        
+        [BurstCompile]
+        private void CheckDiagonalNeighbor(int2 currentPos, int currentIndex, float currentHeight, 
+                                          float currentGCost, int2 offset, int endIndex)
+        {
+            int2 horizontal = new int2(offset.x, 0);
+            int2 vertical = new int2(0, offset.y);
+            
+            int2 horizontalPos = currentPos + horizontal;
+            int2 verticalPos = currentPos + vertical;
+            
+            bool horizontalWalkable = false;
+            bool verticalWalkable = false;
+            
+            if (IsValidPosition(horizontalPos))
+            {
+                int horizontalIndex = GetIndex(horizontalPos);
+                horizontalWalkable = Nodes[horizontalIndex].IsWalkable == 1;
+            }
+            
+            if (IsValidPosition(verticalPos))
+            {
+                int verticalIndex = GetIndex(verticalPos);
+                verticalWalkable = Nodes[verticalIndex].IsWalkable == 1;
+            }
+            
+            if (horizontalWalkable || verticalWalkable)
+            {
+                // Scale diagonal movement by actual world distance
+                float diagonalDistance = DIAGONAL_FACTOR * CellSize;
+                CheckNeighbor(currentPos, currentIndex, currentHeight, currentGCost, 
+                            offset, diagonalDistance, endIndex);
+            }
         }
         
         [BurstCompile]
@@ -121,28 +154,42 @@ namespace PathFinderDOTS.Jobs
         {
             int2 neighborPos = currentPos + offset;
             
-            // Bounds check
-            if (neighborPos.x < 0 || neighborPos.x >= Width || 
-                neighborPos.y < 0 || neighborPos.y >= Height)
+            if (!IsValidPosition(neighborPos))
                 return;
             
             int neighborIndex = GetIndex(neighborPos);
             
-            // Skip unwalkable or closed nodes
             if (Nodes[neighborIndex].IsWalkable == 0 || ClosedSet.ContainsKey(neighborIndex))
                 return;
             
-            // Calculate costs including terrain elevation
+            // Calculate costs with proper scaling
             float heightDiff = TerrainHeights[neighborIndex] - currentHeight;
-            // Use branchless selection for fly cost
-            float flyCost = math.select(0, heightDiff * FlyCostMultiplier, heightDiff > 0);
+            
+            // IMPROVED FLY COST CALCULATION
+            // Now the fly cost is proportional to the movement cost
+            // This makes the multiplier more intuitive (e.g., 2.0 means climbing costs 2x horizontal movement)
+            float flyCost = 0;
+            if (heightDiff > 0)
+            {
+                // Option 1: Linear scaling based on height difference
+                flyCost = heightDiff * FlyCostMultiplier;
+                
+                // Option 2: Scale relative to movement distance for more consistent behavior
+                // float slopeAngle = math.atan2(heightDiff, movementCost);
+                // flyCost = math.tan(slopeAngle) * movementCost * FlyCostMultiplier;
+                
+                // Option 3: Quadratic scaling for steeper penalties
+                // flyCost = (heightDiff * heightDiff / CellSize) * FlyCostMultiplier;
+            }
+            
             float newGCost = currentGCost + movementCost + flyCost;
             
-            // Only update if we found a better path
-            if (newGCost < Costs[neighborIndex].GCost)
+            float existingGCost = Costs[neighborIndex].GCost;
+            
+            if (newGCost < existingGCost)
             {
-                // Calculate heuristic using Octile distance
-                float hCost = OctileDistance(neighborPos, GetGridPosition(endIndex));
+                // Scale heuristic by cell size for consistency
+                float hCost = OctileDistance(neighborPos, GetGridPosition(endIndex)) * CellSize;
                 
                 Costs[neighborIndex] = new PathNodeCost
                 {
@@ -152,7 +199,6 @@ namespace PathFinderDOTS.Jobs
                     ParentIndex = currentIndex
                 };
                 
-                // Add to open list if not already there
                 if (!IsInOpenList(neighborIndex))
                 {
                     OpenList.Add(neighborIndex);
@@ -163,17 +209,20 @@ namespace PathFinderDOTS.Jobs
         [BurstCompile]
         private int PopLowestCostNode()
         {
+            if (OpenList.Length == 0)
+                return -1;
+                
             int bestIndex = 0;
             int bestNodeIndex = OpenList[0];
             float lowestCost = Costs[bestNodeIndex].FCost;
             
-            // Find the node with lowest F cost
             for (int i = 1; i < OpenList.Length; i++)
             {
                 int nodeIndex = OpenList[i];
                 float cost = Costs[nodeIndex].FCost;
                 
-                if (cost < lowestCost)
+                if (cost < lowestCost || (math.abs(cost - lowestCost) < 0.001f && 
+                    Costs[nodeIndex].HCost < Costs[bestNodeIndex].HCost))
                 {
                     lowestCost = cost;
                     bestIndex = i;
@@ -181,7 +230,6 @@ namespace PathFinderDOTS.Jobs
                 }
             }
             
-            // Remove from open list and return
             OpenList.RemoveAtSwapBack(bestIndex);
             return bestNodeIndex;
         }
@@ -189,8 +237,6 @@ namespace PathFinderDOTS.Jobs
         [BurstCompile]
         private bool IsInOpenList(int nodeIndex)
         {
-            // Linear search - acceptable for small open lists
-            // Consider NativeHashSet for very large grids
             for (int i = 0; i < OpenList.Length; i++)
             {
                 if (OpenList[i] == nodeIndex)
@@ -206,17 +252,15 @@ namespace PathFinderDOTS.Jobs
             
             int currentIndex = endIndex;
             int safety = 0;
-            const int maxPathLength = 1000;
+            const int maxPathLength = 10000;
             
-            // Build path backwards from end to start
             while (currentIndex != -1 && safety++ < maxPathLength)
             {
                 ResultPath.Add(currentIndex);
                 currentIndex = Costs[currentIndex].ParentIndex;
             }
             
-            // Reverse path to get start->end order
-            int halfLength = ResultPath.Length >> 1; // Bit shift for fast division by 2
+            int halfLength = ResultPath.Length >> 1;
             for (int i = 0; i < halfLength; i++)
             {
                 int temp = ResultPath[i];
@@ -227,8 +271,8 @@ namespace PathFinderDOTS.Jobs
         }
         
         /// <summary>
-        /// Octile distance heuristic - perfect for 8-directional grid movement
-        /// Faster than Euclidean but maintains accuracy for grid-based pathfinding
+        /// Octile distance - returns grid steps, not world units
+        /// World scaling is applied separately
         /// </summary>
         [BurstCompile]
         private float OctileDistance(int2 a, int2 b)
@@ -236,20 +280,11 @@ namespace PathFinderDOTS.Jobs
             int dx = math.abs(a.x - b.x);
             int dy = math.abs(a.y - b.y);
             
-            // Octile distance formula:
-            // D * max(dx,dy) + (D2-D) * min(dx,dy)
-            // Where D=1 (cardinal) and D2=1.414 (diagonal)
-            // Simplified: max + 0.414 * min
-            
             int max = math.max(dx, dy);
             int min = math.min(dx, dy);
             return max + OCTILE_FACTOR * min;
-            
-            // Alternative formula (equivalent but different calculation):
-            // return (dx + dy) - (1 - OCTILE_FACTOR) * math.min(dx, dy);
         }
         
-        // Helper methods
         [BurstCompile]
         private int GetIndex(int2 pos)
         {

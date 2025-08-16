@@ -1,3 +1,4 @@
+using PathFinder;
 using PathFinderDOTS.Components;
 using Unity.Entities;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace PathFinderDOTS.Authoring
         public float flyCostMultiplier = 1.25f;
         
         [Header("Terrain Reference")]
-        public PathFinder.TerrainInfo terrainInfo;
+        public TerrainInfo terrainInfo;
         
         class Baker : Baker<PathGridAuthoring>
         {
@@ -43,6 +44,6 @@ namespace PathFinderDOTS.Authoring
     
     public class ManagedTerrainReference : IComponentData
     {
-        public PathFinder.TerrainInfo TerrainInfo;
+        public TerrainInfo TerrainInfo;
     }
 }

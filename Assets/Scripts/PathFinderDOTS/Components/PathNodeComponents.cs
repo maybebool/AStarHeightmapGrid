@@ -2,12 +2,12 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 namespace PathFinderDOTS.Components {
-    // Main node component - kept small for cache efficiency
+    
     public struct PathNodeComponent : IComponentData {
         public int2 GridPosition;
         public float TerrainHeight;
-        public byte IsWalkable; // byte for better memory alignment than bool
-        public byte IsProcessed; // For pathfinding state
+        public byte IsWalkable; 
+        public byte IsProcessed; 
     }
 
     // Pathfinding calculation data - separated for better cache usage
@@ -15,7 +15,7 @@ namespace PathFinderDOTS.Components {
         public float GCost;
         public float HCost;
         public float FlyCost;
-        public int ParentIndex; // Index in the grid instead of reference
+        public int ParentIndex; 
 
         public float FCost => GCost + HCost + FlyCost;
     }
@@ -36,6 +36,6 @@ namespace PathFinderDOTS.Components {
     // Buffer element for storing neighbor indices
     public struct NeighborElement : IBufferElementData {
         public int NeighborIndex;
-        public byte IsDiagonal; // 1 for diagonal, 0 for cardinal
+        public byte IsDiagonal; 
     }
 }

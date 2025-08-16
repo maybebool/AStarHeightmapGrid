@@ -1315,6 +1315,11 @@ PrefabInstance:
       propertyPath: terrainInfo
       value: 
       objectReference: {fileID: 1391463747}
+    - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
+        type: 3}
+      propertyPath: flyCostMultiplier
+      value: 5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1561,7 +1566,7 @@ MonoBehaviour:
   heightVariation: 2
   staggerDelay: 0.5
   samplesPerDimension: 64
-  flyCostMultiplier: 5000
+  flyCostMultiplier: 5
   terrainInfo: {fileID: 1391463747}
   timeText: {fileID: 432191898}
   instructionText: {fileID: 1629026686}

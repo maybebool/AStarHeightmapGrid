@@ -135,6 +135,9 @@ namespace PathFinderDOTS.Services
                 return null;
             }
             
+            // CRITICAL FIX: Reset working costs BEFORE pathfinding
+            ResetWorkingCosts();
+            
             // Clear working data (no allocations!)
             _resultPath.Clear();
             _openList.Clear();
@@ -148,6 +151,7 @@ namespace PathFinderDOTS.Services
                 TerrainHeights = _gridData.TerrainHeights,
                 Width = _gridData.Width,
                 Height = _gridData.Height,
+                CellSize = _cellSize, // Pass the actual cell size for proper cost scaling
                 StartPos = new int2(startPos.x, startPos.y),
                 EndPos = new int2(endPos.x, endPos.y),
                 FlyCostMultiplier = _flyCostMultiplier,
@@ -185,23 +189,56 @@ namespace PathFinderDOTS.Services
                 }
                 
                 UnityEngine.Debug.Log($"DOTS Path found: {legacyPath.Count} nodes in {_stopwatch.ElapsedMilliseconds}ms");
+                
+                // Debug diagonal paths
+                if (IsDiagonalPath(startPos, endPos))
+                {
+                    UnityEngine.Debug.Log($"Diagonal path detected: Start({startPos.x},{startPos.y}) -> End({endPos.x},{endPos.y})");
+                    UnityEngine.Debug.Log($"Path nodes: {string.Join(" -> ", legacyPath.ConvertAll(n => $"({n.Index.x},{n.Index.y})"))}");
+                }
             }
-            
-            // Reset costs for next use
-            ResetWorkingCosts();
+            else
+            {
+                UnityEngine.Debug.LogWarning($"No path found from ({startPos.x},{startPos.y}) to ({endPos.x},{endPos.y})");
+                
+                // Additional debug info for failed paths
+                int startIndex = _gridData.GetIndex(startPos.x, startPos.y);
+                int endIndex = _gridData.GetIndex(endPos.x, endPos.y);
+                UnityEngine.Debug.Log($"Start walkable: {_gridData.Nodes[startIndex].IsWalkable}, End walkable: {_gridData.Nodes[endIndex].IsWalkable}");
+            }
             
             return legacyPath;
         }
         
+        private bool IsDiagonalPath(Vector2Int start, Vector2Int end)
+        {
+            int dx = Mathf.Abs(end.x - start.x);
+            int dy = Mathf.Abs(end.y - start.y);
+            // Path is considered diagonal if both x and y distances are significant
+            return dx > 0 && dy > 0 && Mathf.Abs(dx - dy) < Mathf.Max(dx, dy) * 0.5f;
+        }
+        
         public List<Vector3> ConvertPathToWorldPositions(List<PathFinder.PathNode> path, float heightOffset)
         {
-            if (path == null || path.Count == 0) return null;
+            if (path == null || path.Count == 0)
+            {
+                UnityEngine.Debug.LogWarning("ConvertPathToWorldPositions: Path is null or empty");
+                return null;
+            }
             
             var worldPath = new List<Vector3>(path.Count);
             
             foreach (var node in path)
             {
                 int index = _gridData.GetIndex(node.Index.x, node.Index.y);
+                
+                // Validate index
+                if (index < 0 || index >= _gridData.TerrainHeights.Length)
+                {
+                    UnityEngine.Debug.LogError($"Invalid node index: {index} for position ({node.Index.x},{node.Index.y})");
+                    continue;
+                }
+                
                 float terrainHeight = _gridData.TerrainHeights[index];
                 
                 Vector3 worldPos = _gridData.GridToWorldPosition(
@@ -212,6 +249,13 @@ namespace PathFinderDOTS.Services
                 worldPath.Add(worldPos);
             }
             
+            if (worldPath.Count == 0)
+            {
+                UnityEngine.Debug.LogError("ConvertPathToWorldPositions: Failed to convert any nodes to world positions");
+                return null;
+            }
+            
+            UnityEngine.Debug.Log($"Converted {worldPath.Count} path nodes to world positions");
             return worldPath;
         }
         
