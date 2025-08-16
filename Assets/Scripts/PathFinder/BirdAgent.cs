@@ -25,12 +25,9 @@ namespace PathFinder {
         private bool _isMoving;
         private Vector3 _pathOffset; 
         private float _heightOffsetValue; 
-        
-        // Public properties
-        public bool HasReachedDestination => !_isMoving || (_worldPath != null && _currentPathIndex >= _worldPath.Count);
+      
         public Vector3 CurrentPosition => transform.position;
-        public bool IsMoving => _isMoving;
-        
+
         /// <summary>
         /// Initializes the bird with a unique offset for swarm behavior.
         /// </summary>

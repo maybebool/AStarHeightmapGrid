@@ -23,12 +23,13 @@ namespace PathFinderDOTS.Systems {
 
         private void InitializeGrid(ref SystemState state) {
             var gridConfig = SystemAPI.GetSingleton<GridConfiguration>();
-
+            
             _gridData = new PathGridData(
                 gridConfig.Width,
                 gridConfig.Height,
                 gridConfig.CellSize,
                 gridConfig.Origin,
+                gridConfig.FlyCostMultiplier,
                 Allocator.Persistent
             );
 
@@ -51,10 +52,6 @@ namespace PathFinderDOTS.Systems {
                 for (int x = 0; x < grid.Width; x++) {
                     int index = grid.GetIndex(x, y);
                     grid.TerrainHeights[index] = heights[x, y];
-
-                    var node = grid.Nodes[index];
-                    node.TerrainHeight = heights[x, y];
-                    grid.Nodes[index] = node;
                 }
             }
         }
