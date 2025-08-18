@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TerrainUtils.Pathfinding;
 using UnityEngine;
 
 namespace TerrainUtils {
@@ -52,7 +51,7 @@ namespace TerrainUtils {
             _targetTransform = target;
             _targetPositionHistory.Clear();
             
-            if (_targetTransform != null) {
+            if (_targetTransform) {
                 _lastTargetPosition = _targetTransform.position;
                 _lastTargetGridPos = WorldToGridPosition(_lastTargetPosition);
                 
@@ -76,7 +75,7 @@ namespace TerrainUtils {
             
             CreateIndicators();
             
-            if (_targetTransform != null) {
+            if (_targetTransform) {
                 ForceRecalculation();
                 UpdateInstructionText($"Following target: {_targetTransform.name}");
             } else {
@@ -90,7 +89,7 @@ namespace TerrainUtils {
         }
         
         public override void UpdateMode() {
-            if (!_isActive || _targetTransform == null) return;
+            if (!_isActive || !_targetTransform) return;
             
             // Update target velocity tracking
             UpdateTargetVelocity();
@@ -133,7 +132,7 @@ namespace TerrainUtils {
         }
         
         public override string GetStatusInfo() {
-            if (_targetTransform == null) {
+            if (!_targetTransform) {
                 return "No target assigned";
             }
             
@@ -148,7 +147,7 @@ namespace TerrainUtils {
         }
         
         private void UpdateTargetVelocity() {
-            if (_targetTransform == null) return;
+            if (!_targetTransform) return;
             
             var currentPos = _targetTransform.position;
             
@@ -278,37 +277,37 @@ namespace TerrainUtils {
         
         private void CreateIndicators() {
             // Create target indicator
-            if (_targetIndicator == null) {
+            if (!_targetIndicator) {
                 _targetIndicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 _targetIndicator.name = "TargetIndicator";
                 _targetIndicator.transform.localScale = Vector3.one * 3f;
                 var renderer = _targetIndicator.GetComponent<MeshRenderer>();
-                if (renderer != null) {
+                if (renderer) {
                     renderer.material.color = Color.yellow;
                 }
                 // Remove collider
                 var collider = _targetIndicator.GetComponent<Collider>();
-                if (collider != null) Object.Destroy(collider);
+                if (collider) Object.Destroy(collider);
                 _targetIndicator.SetActive(false);
             }
             
             // Create predicted position indicator
-            if (_predictedPositionIndicator == null && _settings.UsePredictiveTargeting) {
+            if (!_predictedPositionIndicator && _settings.UsePredictiveTargeting) {
                 _predictedPositionIndicator = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 _predictedPositionIndicator.name = "PredictedPositionIndicator";
                 _predictedPositionIndicator.transform.localScale = Vector3.one * 2f;
                 var renderer = _predictedPositionIndicator.GetComponent<MeshRenderer>();
-                if (renderer != null) {
+                if (renderer) {
                     renderer.material.color = Color.magenta;
                 }
                 // Remove collider
                 var collider = _predictedPositionIndicator.GetComponent<Collider>();
-                if (collider != null) Object.Destroy(collider);
+                if (collider) Object.Destroy(collider);
                 _predictedPositionIndicator.SetActive(false);
             }
             
             // Create prediction line
-            if (_predictionLine == null && _settings.UsePredictiveTargeting) {
+            if (!_predictionLine && _settings.UsePredictiveTargeting) {
                 var lineObj = new GameObject("PredictionLine");
                 _predictionLine = lineObj.AddComponent<LineRenderer>();
                 _predictionLine.startWidth = 0.5f;
@@ -326,46 +325,46 @@ namespace TerrainUtils {
         }
         
         private void UpdateTargetIndicator() {
-            if (_targetIndicator != null && _targetTransform != null) {
+            if (_targetIndicator && _targetTransform) {
                 _targetIndicator.transform.position = _targetTransform.position + Vector3.up * 2f;
                 _targetIndicator.SetActive(true);
             }
         }
         
         private void UpdatePredictionIndicator() {
-            if (!_settings.UsePredictiveTargeting || _targetTransform == null) return;
+            if (!_settings.UsePredictiveTargeting || !_targetTransform) return;
             
-            if (_predictedPositionIndicator != null && _targetVelocity.magnitude > 0.1f) {
+            if (_predictedPositionIndicator && _targetVelocity.magnitude > 0.1f) {
                 var predictedPos = GetPredictedTargetPosition();
                 _predictedPositionIndicator.transform.position = predictedPos + Vector3.up * 2f;
                 _predictedPositionIndicator.SetActive(true);
-            } else if (_predictedPositionIndicator != null) {
+            } else if (_predictedPositionIndicator) {
                 _predictedPositionIndicator.SetActive(false);
             }
             
-            if (_predictionLine != null && _targetVelocity.magnitude > 0.1f) {
+            if (_predictionLine && _targetVelocity.magnitude > 0.1f) {
                 _predictionLine.enabled = true;
                 _predictionLine.SetPosition(0, _targetTransform.position + Vector3.up * 2f);
                 _predictionLine.SetPosition(1, GetPredictedTargetPosition() + Vector3.up * 2f);
-            } else if (_predictionLine != null) {
+            } else if (_predictionLine) {
                 _predictionLine.enabled = false;
             }
         }
         
         private void DestroyIndicators() {
-            if (_targetIndicator != null) {
+            if (_targetIndicator) {
                 if (Application.isPlaying) Object.Destroy(_targetIndicator);
                 else Object.DestroyImmediate(_targetIndicator);
                 _targetIndicator = null;
             }
             
-            if (_predictedPositionIndicator != null) {
+            if (_predictedPositionIndicator) {
                 if (Application.isPlaying) Object.Destroy(_predictedPositionIndicator);
                 else Object.DestroyImmediate(_predictedPositionIndicator);
                 _predictedPositionIndicator = null;
             }
             
-            if (_predictionLine != null) {
+            if (_predictionLine) {
                 if (Application.isPlaying) Object.Destroy(_predictionLine.gameObject);
                 else Object.DestroyImmediate(_predictionLine.gameObject);
                 _predictionLine = null;

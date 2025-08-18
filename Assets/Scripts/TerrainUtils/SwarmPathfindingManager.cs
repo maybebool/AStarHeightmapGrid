@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using PathFinderDOTS.Services;
-using TerrainUtils.Pathfinding;
 using TMPro;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -75,6 +74,7 @@ namespace TerrainUtils {
         private PathRequest _lastPathRequest;
         private Coroutine _pathVisualizationCoroutine;
         private List<Vector2Int> _pathColoredCells = new();
+        private Camera camera1;
 
         private void Awake() {
             ValidateSettings();
@@ -82,6 +82,7 @@ namespace TerrainUtils {
         }
 
         private void Start() {
+            camera1 = Camera.main;
             _mainCamera = Camera.main;
             _timer = new Stopwatch();
 
@@ -146,9 +147,9 @@ namespace TerrainUtils {
 
         private void InitializePathfindingModes() {
             // Ensure camera is available
-            if (_mainCamera == null) {
-                _mainCamera = Camera.main;
-                if (_mainCamera == null) {
+            if (!_mainCamera) {
+                _mainCamera = camera1;
+                if (!_mainCamera) {
                     Debug.LogError("No main camera found! Pathfinding modes require a camera.");
                     return;
                 }
@@ -190,7 +191,7 @@ namespace TerrainUtils {
             _targetFollowMode.OnClearPath += ClearCurrentPath;
             
             // Set initial target if provided
-            if (targetToFollow != null) {
+            if (targetToFollow) {
                 _targetFollowMode.SetTarget(targetToFollow);
             }
         }
@@ -221,7 +222,7 @@ namespace TerrainUtils {
                 case PathfindingModeType.TargetFollow:
                     _currentMode = _targetFollowMode;
                     // Update target if changed in inspector
-                    if (targetToFollow != null && _targetFollowMode.GetTarget() != targetToFollow) {
+                    if (targetToFollow && _targetFollowMode.GetTarget() != targetToFollow) {
                         _targetFollowMode.SetTarget(targetToFollow);
                     }
                     break;
