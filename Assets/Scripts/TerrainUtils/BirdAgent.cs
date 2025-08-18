@@ -49,7 +49,7 @@ namespace TerrainUtils {
         private float _targetSpeed;
         private Quaternion _targetRotation;
         
-        private int _lookAheadDistance = 2;
+        private readonly int _lookAheadDistance = 2;
         private Vector3 _lookAheadTarget;
         
         public Vector3 CurrentPosition => transform.position;
