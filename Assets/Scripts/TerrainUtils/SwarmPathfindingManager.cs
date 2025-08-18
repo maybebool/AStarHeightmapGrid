@@ -136,6 +136,7 @@ namespace TerrainUtils {
                 
                 agent.InitializeSwarmBehavior(pathFollowRadius, heightVariation);
                 _birdAgents.Add(agent);
+                
                 var angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
                 var radius = Random.Range(0f, spawnRadius);
                 var offset = new Vector3(
@@ -288,12 +289,15 @@ namespace TerrainUtils {
 
         private void SendBirdsAlongPath(List<Vector3> worldPath) {
             if (_birdAgents.Count == 0) return;
-            var shouldTeleport = false;
+            
+            var shouldTeleport = !_isPathActive;
+    
             foreach (var bird in _birdAgents) {
                 var delay = Random.Range(0f, staggerDelay);
                 StartCoroutine(DelayedBirdStart(bird, worldPath, delay, shouldTeleport));
             }
         }
+
 
         private IEnumerator DelayedBirdStart(BirdAgent bird, List<Vector3> path, float delay, bool teleportToStart) {
             yield return new WaitForSeconds(delay);
@@ -319,7 +323,7 @@ namespace TerrainUtils {
         }
 
         private void ClearVisualization() {
-            if (terrainInfo != null && Application.isPlaying) {
+            if (terrainInfo && Application.isPlaying) {
                 try {
                     foreach (var cell in _coloredCells) {
                         terrainInfo.ResetCellColor(cell);
@@ -330,8 +334,6 @@ namespace TerrainUtils {
             }
 
             _coloredCells.Clear();
-
-            // Clear line renderer
             if (_pathLineRenderer) {
                 try {
                     _pathLineRenderer.positionCount = 0;
@@ -372,8 +374,7 @@ namespace TerrainUtils {
             _isPathActive = false;
 
             ClearVisualization();
-
-            // Destroy all bird agents
+            
             foreach (var bird in _birdAgents) {
                 if (bird != null) {
                     Destroy(bird.gameObject);

@@ -1303,12 +1303,12 @@ PrefabInstance:
     - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
         type: 3}
       propertyPath: gridWidth
-      value: 64
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
         type: 3}
       propertyPath: gridHeight
-      value: 64
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 6643823297295010416, guid: ec5383e662a8dc247b04aa25e813290b,
         type: 3}
@@ -1556,7 +1556,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a7b64db30c3a8449487580742ee516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useDOTSPathfinding: 1
   birdPrefab: {fileID: 273390498063459725, guid: 45627d335c362604cb4ed9fec42930b4,
     type: 3}
   numberOfBirds: 5
@@ -1565,7 +1564,7 @@ MonoBehaviour:
   pathFollowRadius: 3
   heightVariation: 2
   staggerDelay: 0.5
-  samplesPerDimension: 64
+  samplesPerDimension: 16
   flyCostMultiplier: 5
   terrainInfo: {fileID: 1391463747}
   timeText: {fileID: 432191898}
@@ -1577,7 +1576,25 @@ MonoBehaviour:
   pathColor: {r: 0, g: 0, b: 0, a: 1}
   pathLineWidthCurve:
     serializedVersion: 2
-    m_Curve: []
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
@@ -2008,7 +2025,12 @@ PrefabInstance:
     - target: {fileID: 4409800385788854854, guid: b37f8ab4df6fb8a40868f80d4541709f,
         type: 3}
       propertyPath: samplesPerSide
-      value: 64
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 4573524312213765768, guid: b37f8ab4df6fb8a40868f80d4541709f,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7533063004658216488, guid: b37f8ab4df6fb8a40868f80d4541709f,
         type: 3}
