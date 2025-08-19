@@ -1,25 +1,24 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-namespace TerrainUtils.Pathfinding {
-    /// <summary>
-    /// Real-time target following mode for open-world games
-    /// </summary>
+namespace TerrainUtils {
+
     public class TargetFollowPathfindingMode : PathfindingModeBase {
         // Target configuration
         private Transform _targetTransform;
         private Vector2Int _lastTargetGridPos;
         private Vector2Int _lastStartGridPos;
+        private bool _targetWasOutOfBounds = false;
         
         // Recalculation settings
         [System.Serializable]
         public class RecalculationSettings {
-            public float MinRecalculationInterval = 0.5f;  // Minimum time between recalculations
-            public float TargetMoveThreshold = 2f;         // Min distance target must move (in grid cells)
-            public float SwarmMoveThreshold = 3f;          // Min distance swarm must move
-            public bool UseDistanceBasedThrottling = true; // Recalculate less often when far from target
-            public float MaxThrottleDistance = 50f;        // Distance at which max throttling occurs
-            public float MaxThrottleMultiplier = 3f;       // Max interval multiplier when far away
+            public float MinRecalculationInterval = 0.5f;
+            public float TargetMoveThreshold = 2f;
+            public float SwarmMoveThreshold = 3f;
+            public bool UseDistanceBasedThrottling = true;
+            public float MaxThrottleDistance = 50f;
+            public float MaxThrottleMultiplier = 3f;
+            public bool ShowBoundaryWarnings = true;
         }
         
         private RecalculationSettings _settings;
@@ -27,6 +26,7 @@ namespace TerrainUtils.Pathfinding {
         
         // Visual indicators
         private GameObject _targetIndicator;
+        private GameObject _boundaryWarningIndicator;
         
         public override string ModeName => "Target Follow";
         
@@ -42,14 +42,20 @@ namespace TerrainUtils.Pathfinding {
             _targetTransform = target;
             
             if (_targetTransform != null) {
-                _lastTargetGridPos = WorldToGridPosition(_targetTransform.position);
+                // Use safe conversion to handle out-of-bounds targets
+                _lastTargetGridPos = WorldToGridPositionSafe(_targetTransform.position, out _targetWasOutOfBounds);
+                
+                if (_targetWasOutOfBounds && _settings.ShowBoundaryWarnings) {
+                    Debug.LogWarning($"[Target Follow] Target '{_targetTransform.name}' is outside grid bounds. Position will be clamped.");
+                }
                 
                 if (_isActive) {
                     ForceRecalculation();
                     UpdateTargetIndicator();
                 }
                 
-                UpdateInstructionText($"Following target: {_targetTransform.name}");
+                UpdateInstructionText($"Following target: {_targetTransform.name}" + 
+                    (_targetWasOutOfBounds ? " (clamped to grid bounds)" : ""));
             } else {
                 UpdateInstructionText("No target set - assign a target GameObject");
                 DestroyIndicators();
@@ -87,6 +93,7 @@ namespace TerrainUtils.Pathfinding {
             
             // Update visual indicators
             UpdateTargetIndicator();
+            UpdateBoundaryWarning();
         }
         
         public override void Cleanup() {
@@ -97,10 +104,18 @@ namespace TerrainUtils.Pathfinding {
         public override void DrawDebugVisualization() {
             if (!_isActive || _targetTransform == null) return;
             
-            // Draw target position
-            Gizmos.color = Color.yellow;
+            // Draw actual target position
+            Gizmos.color = _targetWasOutOfBounds ? Color.red : Color.yellow;
             Gizmos.DrawWireSphere(_targetTransform.position, 2f);
             Gizmos.DrawLine(_targetTransform.position, _targetTransform.position + Vector3.up * 10f);
+            
+            // Draw clamped position if different
+            if (_targetWasOutOfBounds) {
+                var clampedWorldPos = GridToWorldPosition(_lastTargetGridPos, 0);
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(clampedWorldPos, 2.5f);
+                Gizmos.DrawLine(_targetTransform.position, clampedWorldPos);
+            }
             
             // Draw recalculation threshold radius
             var targetGridWorld = GridToWorldPosition(_lastTargetGridPos);
@@ -115,8 +130,9 @@ namespace TerrainUtils.Pathfinding {
             
             var timeSinceRecalc = Time.time - _lastRecalculationTime;
             var throttleMultiplier = GetThrottleMultiplier();
+            var boundaryStatus = _targetWasOutOfBounds ? " [OUT OF BOUNDS]" : "";
             
-            return $"Target: {_targetTransform.name} | " +
+            return $"Target: {_targetTransform.name}{boundaryStatus} | " +
                    $"Last Recalc: {timeSinceRecalc:F1}s ago | " +
                    $"Throttle: {throttleMultiplier:F1}x";
         }
@@ -130,9 +146,15 @@ namespace TerrainUtils.Pathfinding {
                 return false;
             }
             
-            // Check target movement threshold
-            var currentTargetGridPos = WorldToGridPosition(_targetTransform.position);
+            // Check target movement threshold with safe boundary handling
+            var currentTargetGridPos = WorldToGridPositionSafe(_targetTransform.position, out bool currentlyOutOfBounds);
             var targetGridDistance = Vector2Int.Distance(currentTargetGridPos, _lastTargetGridPos);
+            
+            // Force recalculation if target boundary status changed
+            if (currentlyOutOfBounds != _targetWasOutOfBounds) {
+                _targetWasOutOfBounds = currentlyOutOfBounds;
+                return true;
+            }
             
             if (targetGridDistance < _settings.TargetMoveThreshold) {
                 return false;
@@ -140,7 +162,7 @@ namespace TerrainUtils.Pathfinding {
             
             // Check swarm movement threshold (if applicable)
             if (IsPathActive()) {
-                var currentSwarmPos = WorldToGridPosition(GetAverageBirdPosition());
+                var currentSwarmPos = WorldToGridPositionSafe(GetAverageBirdPosition(), out _);
                 var swarmGridDistance = Vector2Int.Distance(currentSwarmPos, _lastStartGridPos);
                 
                 if (swarmGridDistance < _settings.SwarmMoveThreshold) {
@@ -168,28 +190,32 @@ namespace TerrainUtils.Pathfinding {
         private void RecalculatePath() {
             Vector2Int startPos;
             Vector2Int endPos;
+            bool startOutOfBounds = false;
+            bool endOutOfBounds = false;
             
-            // Determine start position
+            // Determine start position with boundary safety
             if (IsPathActive()) {
-                startPos = WorldToGridPosition(GetAverageBirdPosition());
+                startPos = WorldToGridPositionSafe(GetAverageBirdPosition(), out startOutOfBounds);
             } else {
-                // If no active path, start from a default position or skip
-                startPos = WorldToGridPosition(_context.TerrainInfo.transform.position);
+                startPos = WorldToGridPositionSafe(_context.TerrainInfo.transform.position, out startOutOfBounds);
             }
             
-            // Get current target position (no prediction)
-            endPos = WorldToGridPosition(_targetTransform.position);
+            // Get current target position with boundary safety
+            endPos = WorldToGridPositionSafe(_targetTransform.position, out endOutOfBounds);
+            _targetWasOutOfBounds = endOutOfBounds;
             
-            // Validate positions
-            if (!IsValidGridPosition(startPos) || !IsValidGridPosition(endPos)) {
-                Debug.LogWarning($"[Target Follow] Invalid positions for path calculation");
-                return;
+            // Log boundary violations if needed
+            if ((startOutOfBounds || endOutOfBounds) && _settings.ShowBoundaryWarnings) {
+                var warning = "[Target Follow] Boundary violation detected: ";
+                if (startOutOfBounds) warning += "Swarm is outside grid. ";
+                if (endOutOfBounds) warning += $"Target '{_targetTransform.name}' is outside grid. ";
+                warning += "Positions clamped to valid bounds.";
+                Debug.LogWarning(warning);
             }
             
             // Check if start and end are the same (birds have reached the target)
             if (startPos == endPos) {
                 Debug.Log($"[Target Follow] Birds have reached the target position");
-                // Don't clear the path, just skip recalculation
                 _lastRecalculationTime = Time.time;
                 _lastTargetGridPos = endPos;
                 return;
@@ -200,12 +226,12 @@ namespace TerrainUtils.Pathfinding {
             _lastTargetGridPos = endPos;
             _lastRecalculationTime = Time.time;
             
-            // Visualize
+            // Visualize with warning colors if out of bounds
             ClearVisualization();
-            SetCellColor(startPos, StartColor);
-            SetCellColor(endPos, EndColor);
+            SetCellColor(startPos, startOutOfBounds ? WarningColor : StartColor);
+            SetCellColor(endPos, endOutOfBounds ? WarningColor : EndColor);
             
-            // Request path
+            // Use the base class RequestPath method which will invoke the event properly
             RequestPath(startPos, endPos);
         }
         
@@ -224,17 +250,61 @@ namespace TerrainUtils.Pathfinding {
                 if (renderer != null) {
                     renderer.material.color = Color.yellow;
                 }
-                // Remove collider
                 var collider = _targetIndicator.GetComponent<Collider>();
                 if (collider != null) Object.Destroy(collider);
                 _targetIndicator.SetActive(false);
+            }
+            
+            // Create boundary warning indicator
+            if (_boundaryWarningIndicator == null) {
+                _boundaryWarningIndicator = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                _boundaryWarningIndicator.name = "BoundaryWarningIndicator";
+                _boundaryWarningIndicator.transform.localScale = new Vector3(1f, 5f, 1f);
+                var renderer = _boundaryWarningIndicator.GetComponent<MeshRenderer>();
+                if (renderer != null) {
+                    renderer.material.color = WarningColor;
+                }
+                var collider = _boundaryWarningIndicator.GetComponent<Collider>();
+                if (collider != null) Object.Destroy(collider);
+                _boundaryWarningIndicator.SetActive(false);
             }
         }
         
         private void UpdateTargetIndicator() {
             if (_targetIndicator != null && _targetTransform != null) {
-                _targetIndicator.transform.position = _targetTransform.position + Vector3.up * 2f;
+                // Show indicator at clamped position if out of bounds
+                if (_targetWasOutOfBounds) {
+                    var clampedPos = GridToWorldPosition(_lastTargetGridPos, 2f);
+                    _targetIndicator.transform.position = clampedPos;
+                    var renderer = _targetIndicator.GetComponent<MeshRenderer>();
+                    if (renderer != null) {
+                        renderer.material.color = WarningColor;
+                    }
+                } else {
+                    _targetIndicator.transform.position = _targetTransform.position + Vector3.up * 2f;
+                    var renderer = _targetIndicator.GetComponent<MeshRenderer>();
+                    if (renderer != null) {
+                        renderer.material.color = Color.yellow;
+                    }
+                }
                 _targetIndicator.SetActive(true);
+            }
+        }
+        
+        private void UpdateBoundaryWarning() {
+            if (_boundaryWarningIndicator != null && _targetTransform != null) {
+                if (_targetWasOutOfBounds) {
+                    var clampedPos = GridToWorldPosition(_lastTargetGridPos, 5f);
+                    _boundaryWarningIndicator.transform.position = clampedPos;
+                    _boundaryWarningIndicator.SetActive(true);
+                    
+                    // Pulse effect for warning
+                    var scale = _boundaryWarningIndicator.transform.localScale;
+                    scale.y = 5f + Mathf.Sin(Time.time * 3f) * 0.5f;
+                    _boundaryWarningIndicator.transform.localScale = scale;
+                } else {
+                    _boundaryWarningIndicator.SetActive(false);
+                }
             }
         }
         
@@ -243,6 +313,12 @@ namespace TerrainUtils.Pathfinding {
                 if (Application.isPlaying) Object.Destroy(_targetIndicator);
                 else Object.DestroyImmediate(_targetIndicator);
                 _targetIndicator = null;
+            }
+            
+            if (_boundaryWarningIndicator != null) {
+                if (Application.isPlaying) Object.Destroy(_boundaryWarningIndicator);
+                else Object.DestroyImmediate(_boundaryWarningIndicator);
+                _boundaryWarningIndicator = null;
             }
         }
         

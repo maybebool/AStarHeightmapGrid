@@ -18,6 +18,7 @@ namespace TerrainUtils {
         protected readonly Color StartColor = Color.green;
         protected readonly Color EndColor = Color.red;
         protected readonly Color PathColor = Color.blue;
+        protected readonly Color WarningColor = new Color(1f, 0.5f, 0f); // Orange for boundary warnings
         
         public virtual void Initialize(PathfindingModeContext context) {
             _context = context;
@@ -45,23 +46,99 @@ namespace TerrainUtils {
         
         public abstract string GetStatusInfo();
         
-        // Helper methods
-        protected void RequestPath(Vector2Int start, Vector2Int end) {
-            if (!IsValidGridPosition(start) || !IsValidGridPosition(end)) {
-                Debug.LogWarning($"[{ModeName}] Invalid grid positions: start={start}, end={end}");
-                return;
-            }
-            
-            var request = new PathRequest(start, end, _context.BirdHeightOffset);
+        // Protected methods for event invocation (allows derived classes to trigger events)
+        
+        /// <summary>
+        /// Invokes the OnPathRequested event - accessible to derived classes
+        /// </summary>
+        protected void InvokePathRequest(PathRequest request) {
             OnPathRequested?.Invoke(request);
         }
         
-        protected void ClearCurrentPath() {
+        /// <summary>
+        /// Invokes the OnClearPath event - accessible to derived classes
+        /// </summary>
+        protected void InvokeClearPath() {
             OnClearPath?.Invoke();
         }
         
+        // Enhanced helper methods with boundary safety
+        
+        /// <summary>
+        /// Request path with automatic boundary clamping
+        /// </summary>
+        protected void RequestPath(Vector2Int start, Vector2Int end) {
+            // Clamp positions to valid grid bounds
+            var clampedStart = ClampToValidGridPosition(start);
+            var clampedEnd = ClampToValidGridPosition(end);
+            
+            // Log if positions were clamped
+            if (clampedStart != start || clampedEnd != end) {
+                LogBoundaryClamp(start, clampedStart, "start");
+                LogBoundaryClamp(end, clampedEnd, "end");
+            }
+            
+            var request = new PathRequest(clampedStart, clampedEnd, _context.BirdHeightOffset);
+            InvokePathRequest(request);
+        }
+        
+        /// <summary>
+        /// Request path with boundary checking and optional warning visualization
+        /// </summary>
+        protected void RequestPathSafe(Vector2Int start, Vector2Int end, bool visualizeWarning = true) {
+            bool startWasClamped = false;
+            bool endWasClamped = false;
+            
+            var clampedStart = start;
+            var clampedEnd = end;
+            
+            if (!IsValidGridPosition(start)) {
+                clampedStart = ClampToValidGridPosition(start);
+                startWasClamped = true;
+                
+                if (visualizeWarning) {
+                    SetCellColor(clampedStart, WarningColor);
+                }
+            }
+            
+            if (!IsValidGridPosition(end)) {
+                clampedEnd = ClampToValidGridPosition(end);
+                endWasClamped = true;
+                
+                if (visualizeWarning) {
+                    SetCellColor(clampedEnd, WarningColor);
+                }
+            }
+            
+            if (startWasClamped || endWasClamped) {
+                var warningMsg = $"Path positions were clamped to grid bounds: ";
+                if (startWasClamped) warningMsg += $"Start ({start}→{clampedStart}) ";
+                if (endWasClamped) warningMsg += $"End ({end}→{clampedEnd})";
+                
+                Debug.LogWarning($"[{ModeName}] {warningMsg}");
+                UpdateInstructionText("Warning: Position was outside grid bounds and was clamped!");
+            }
+            
+            var request = new PathRequest(clampedStart, clampedEnd, _context.BirdHeightOffset);
+            InvokePathRequest(request);
+        }
+        
+        protected void ClearCurrentPath() {
+            InvokeClearPath();
+        }
+        
+        /// <summary>
+        /// Convert world position to grid position with automatic clamping
+        /// </summary>
         protected Vector2Int WorldToGridPosition(Vector3 worldPos) {
             return _context.PathfindingService.WorldToGridPosition(worldPos);
+        }
+        
+        /// <summary>
+        /// Convert world position to grid position with out-of-bounds check
+        /// </summary>
+        protected Vector2Int WorldToGridPositionSafe(Vector3 worldPos, out bool wasOutOfBounds) {
+            return _context.PathfindingService.WorldToGridPositionSafe(worldPos, out wasOutOfBounds);
         }
         
         protected Vector3 GridToWorldPosition(Vector2Int gridPos, float yOffset = 0) {
@@ -72,11 +149,21 @@ namespace TerrainUtils {
             return _context.PathfindingService.IsValidGridPosition(pos);
         }
         
+        /// <summary>
+        /// Clamp a grid position to valid bounds
+        /// </summary>
+        protected Vector2Int ClampToValidGridPosition(Vector2Int pos) {
+            return _context.PathfindingService.ClampToValidGridPosition(pos);
+        }
+        
         protected void SetCellColor(Vector2Int gridPos, Color color) {
+            // Ensure position is valid before setting color
+            var clampedPos = ClampToValidGridPosition(gridPos);
+            
             if (_context.TerrainInfo) {
-                _context.TerrainInfo.SetColor(gridPos, color);
-                if (!_coloredCells.Contains(gridPos)) {
-                    _coloredCells.Add(gridPos);
+                _context.TerrainInfo.SetColor(clampedPos, color);
+                if (!_coloredCells.Contains(clampedPos)) {
+                    _coloredCells.Add(clampedPos);
                 }
             }
         }
@@ -112,7 +199,6 @@ namespace TerrainUtils {
             }
             
             if (!_context.IsValid()) {
-                // Provide detailed error information
                 var missingComponents = new List<string>();
                 if (!_context.MainCamera) missingComponents.Add("MainCamera");
                 if (!_context.TerrainInfo) missingComponents.Add("TerrainInfo");
@@ -126,7 +212,9 @@ namespace TerrainUtils {
             }
         }
         
-        // Optional: Helper for ray casting from camera
+        /// <summary>
+        /// Helper for ray casting from camera with boundary check
+        /// </summary>
         protected bool GetTerrainHitFromScreenPoint(Vector2 screenPoint, out RaycastHit hit) {
             if (!_context.MainCamera) {
                 hit = default;
@@ -134,7 +222,36 @@ namespace TerrainUtils {
             }
             
             var ray = _context.MainCamera.ScreenPointToRay(screenPoint);
-            return Physics.Raycast(ray, out hit);
+            
+            if (Physics.Raycast(ray, out hit)) {
+                // Check if hit point is within terrain bounds
+                var gridPos = WorldToGridPositionSafe(hit.point, out bool wasOutOfBounds);
+                
+                if (wasOutOfBounds && _context.ShowClampWarnings) {
+                    Debug.LogWarning($"[{ModeName}] Click was outside grid bounds. Position will be clamped.");
+                }
+                
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// Log boundary clamping for debugging
+        /// </summary>
+        private void LogBoundaryClamp(Vector2Int original, Vector2Int clamped, string positionName) {
+            if (original != clamped && _context.ShowClampWarnings) {
+                Debug.LogWarning($"[{ModeName}] {positionName} position clamped from {original} to {clamped}");
+            }
+        }
+        
+        /// <summary>
+        /// Get distance to nearest grid boundary (useful for warning thresholds)
+        /// </summary>
+        protected float GetDistanceToNearestBoundary(Vector2Int position) {
+            var boundaryHandler = _context.PathfindingService.GetBoundaryHandler();
+            return boundaryHandler?.DistanceToNearestBoundary(position) ?? float.MaxValue;
         }
     }
 }

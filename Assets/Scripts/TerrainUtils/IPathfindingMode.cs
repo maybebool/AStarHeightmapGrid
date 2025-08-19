@@ -3,9 +3,7 @@ using PathFinderDOTS.Services;
 using UnityEngine;
 
 namespace TerrainUtils {
-    /// <summary>
-    /// Interface for different pathfinding modes (mouse-click, target-follow, etc.)
-    /// </summary>
+
     public interface IPathfindingMode {
         /// <summary>
         /// Name of the mode for UI display
@@ -73,16 +71,70 @@ namespace TerrainUtils {
         public Transform SwarmCenterTransform { get; set; }
         public float BirdHeightOffset { get; set; }
         
+        // Grid information for boundary checking
+        public int GridSize { get; set; } = 64; // Default based on TerrainInfo
+        public Vector2Int GridDimensions { get; set; } // For non-square grids
+        
         // Callbacks for mode to communicate with manager
         public Action<string> UpdateInstructionText { get; set; }
         public Func<Vector3> GetAverageBirdPosition { get; set; }
         public Func<bool> IsPathActive { get; set; }
+        
+        // Additional configuration
+        public bool AutoClampOutOfBounds { get; set; } = true;
+        public bool ShowClampWarnings { get; set; } = true;
         
         // Validation
         public bool IsValid() {
             return MainCamera != null && 
                    TerrainInfo != null && 
                    PathfindingService != null;
+        }
+        
+        /// <summary>
+        /// Initialize grid dimensions from terrain info
+        /// </summary>
+        public void InitializeFromTerrain() {
+            if (TerrainInfo != null) {
+                // Try to get the actual grid size from terrain
+                // This assumes samplesPerSide is accessible
+                GridSize = 64; // You'll need to make this accessible from TerrainInfo
+                GridDimensions = new Vector2Int(GridSize, GridSize);
+            }
+        }
+        
+        /// <summary>
+        /// Helper to clamp a grid position to valid bounds
+        /// </summary>
+        public Vector2Int ClampToValidGrid(Vector2Int position) {
+            if (GridDimensions == Vector2Int.zero) {
+                // Use square grid assumption
+                return new Vector2Int(
+                    Mathf.Clamp(position.x, 0, GridSize - 1),
+                    Mathf.Clamp(position.y, 0, GridSize - 1)
+                );
+            } else {
+                // Use actual dimensions
+                return new Vector2Int(
+                    Mathf.Clamp(position.x, 0, GridDimensions.x - 1),
+                    Mathf.Clamp(position.y, 0, GridDimensions.y - 1)
+                );
+            }
+        }
+        
+        /// <summary>
+        /// Check if a grid position is within valid bounds
+        /// </summary>
+        public bool IsValidGridPosition(Vector2Int position) {
+            if (GridDimensions == Vector2Int.zero) {
+                // Use square grid assumption
+                return position.x >= 0 && position.x < GridSize &&
+                       position.y >= 0 && position.y < GridSize;
+            } else {
+                // Use actual dimensions
+                return position.x >= 0 && position.x < GridDimensions.x &&
+                       position.y >= 0 && position.y < GridDimensions.y;
+            }
         }
     }
 }

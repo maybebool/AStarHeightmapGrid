@@ -14,6 +14,7 @@ namespace PathFinderDOTS.Services {
     public class DOTSPathfindingService : MonoBehaviour {
         
         private PathGridData _gridData;
+        private GridBoundaryHandler _boundaryHandler;
         private bool _isInitialized = false;
         private int _gridSize;
         private float _cellSize;
@@ -26,6 +27,11 @@ namespace PathFinderDOTS.Services {
         private NativeList<int> _openList;
         
         private Stopwatch _stopwatch = new();
+        
+        // Configuration for boundary handling behavior
+        [Header("Boundary Handling")]
+        [SerializeField] private bool _autoClampOutOfBounds = true;
+        [SerializeField] private bool _logBoundaryWarnings = true;
 
         public void Initialize(int gridSize, float cellSize, float flyCostMultiplier,
             TerrainInfo terrainInfo) {
@@ -36,6 +42,7 @@ namespace PathFinderDOTS.Services {
 
             InitializeGrid();
             InitializePersistentArrays();
+            InitializeBoundaryHandler();
         }
 
         private void InitializeGrid() {
@@ -70,6 +77,12 @@ namespace PathFinderDOTS.Services {
                                   $"flyCostMultiplier: {_flyCostMultiplier}");
         }
 
+        private void InitializeBoundaryHandler() {
+            var origin = _terrainInfo != null ? _terrainInfo.transform.position : Vector3.zero;
+            _boundaryHandler = new GridBoundaryHandler(_gridSize, _gridSize, _cellSize, origin);
+            UnityEngine.Debug.Log($"Boundary Handler initialized: {_boundaryHandler.GetBoundaryInfo()}");
+        }
+
         private void InitializePersistentArrays() {
             var totalNodes = _gridSize * _gridSize;
             
@@ -82,7 +95,6 @@ namespace PathFinderDOTS.Services {
         }
 
         private void ResetWorkingState() {
-
             for (int i = 0; i < _workingNodes.Length; i++) {
                 _workingNodes[i] = new PathNodeComponent {
                     IsWalkable = _gridData.Nodes[i].IsWalkable,
@@ -107,11 +119,9 @@ namespace PathFinderDOTS.Services {
 
             _stopwatch.Restart();
 
-            // Validate positions
-            if (!IsValidGridPosition(startPos) || !IsValidGridPosition(endPos)) {
-                UnityEngine.Debug.LogWarning($"Invalid path positions: start={startPos}, end={endPos}");
-                return null;
-            }
+            // Handle out-of-bounds positions
+            var (clampedStart, startWasOutOfBounds) = HandleOutOfBoundsPosition(startPos, "start");
+            var (clampedEnd, endWasOutOfBounds) = HandleOutOfBoundsPosition(endPos, "end");
 
             // Reset working state
             ResetWorkingState();
@@ -128,12 +138,11 @@ namespace PathFinderDOTS.Services {
                 Height = _gridData.Height,
                 CellSize = _cellSize,
                 FlyCostMultiplier = _gridData.FlyCostMultiplier,
-                StartPos = new int2(startPos.x, startPos.y),
-                EndPos = new int2(endPos.x, endPos.y),
+                StartPos = new int2(clampedStart.x, clampedStart.y),
+                EndPos = new int2(clampedEnd.x, clampedEnd.y),
                 ResultPath = _resultPath,
                 OpenList = _openList
             };
-
 
             JobHandle handle = pathfindingJob.Schedule();
             handle.Complete();
@@ -158,7 +167,8 @@ namespace PathFinderDOTS.Services {
                 }
 
                 UnityEngine.Debug.Log(
-                    $"[DOTS] Path found: {worldPath.Count} positions in {_stopwatch.ElapsedMilliseconds}ms");
+                    $"[DOTS] Path found: {worldPath.Count} positions in {_stopwatch.ElapsedMilliseconds}ms" +
+                    (startWasOutOfBounds || endWasOutOfBounds ? " (positions were clamped to grid bounds)" : ""));
 
                 // Log optimization stats
                 var processedCount = 0;
@@ -172,28 +182,79 @@ namespace PathFinderDOTS.Services {
             }
             else {
                 UnityEngine.Debug.LogWarning(
-                    $"No path found from ({startPos.x},{startPos.y}) to ({endPos.x},{endPos.y})");
+                    $"No path found from ({clampedStart.x},{clampedStart.y}) to ({clampedEnd.x},{clampedEnd.y})");
             }
 
             return worldPath;
         }
 
+        private (Vector2Int position, bool wasOutOfBounds) HandleOutOfBoundsPosition(Vector2Int position, string positionName) {
+            if (_boundaryHandler.IsValidGridPosition(position)) {
+                return (position, false);
+            }
+
+            if (_autoClampOutOfBounds) {
+                var clamped = _boundaryHandler.ClampToValidGrid(position);
+                
+                if (_logBoundaryWarnings) {
+                    UnityEngine.Debug.LogWarning(
+                        $"[DOTSPathfinding] {positionName} position ({position.x},{position.y}) was out of bounds. " +
+                        $"Clamped to ({clamped.x},{clamped.y}). {_boundaryHandler.GetBoundaryInfo()}");
+                }
+                
+                return (clamped, true);
+            }
+            
+            // If auto-clamp is disabled, return invalid position (will fail in pathfinding)
+            UnityEngine.Debug.LogError(
+                $"[DOTSPathfinding] {positionName} position ({position.x},{position.y}) is out of bounds! " +
+                $"{_boundaryHandler.GetBoundaryInfo()}");
+            return (position, true);
+        }
 
         public Vector2Int WorldToGridPosition(Vector3 worldPos) {
             if (!_isInitialized) return Vector2Int.zero;
-            int2 gridPos = _gridData.WorldToGridPosition(worldPos);
-            return new Vector2Int(gridPos.x, gridPos.y);
+            
+            if (_autoClampOutOfBounds) {
+                return _boundaryHandler.WorldToGridPositionClamped(worldPos);
+            }
+            
+            return _boundaryHandler.WorldToGridPositionUnclamped(worldPos);
+        }
+        
+        public Vector2Int WorldToGridPositionSafe(Vector3 worldPos, out bool wasOutOfBounds) {
+            if (!_isInitialized) {
+                wasOutOfBounds = true;
+                return Vector2Int.zero;
+            }
+            
+            var result = _boundaryHandler.GetNearestValidGridPosition(worldPos);
+            wasOutOfBounds = result.wasOutOfBounds;
+            return result.gridPos;
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPos, float yOffset = 0) {
             if (!_isInitialized) return Vector3.zero;
+            
+            // Clamp position if needed
+            if (_autoClampOutOfBounds) {
+                gridPos = _boundaryHandler.ClampToValidGrid(gridPos);
+            }
+            
             return _gridData.GridToWorldPosition(new int2(gridPos.x, gridPos.y), yOffset);
         }
 
         public bool IsValidGridPosition(Vector2Int pos) {
             if (!_isInitialized) return false;
-            return _gridData.IsValidPosition(new int2(pos.x, pos.y));
+            return _boundaryHandler.IsValidGridPosition(pos);
         }
+        
+        public Vector2Int ClampToValidGridPosition(Vector2Int pos) {
+            if (!_isInitialized) return Vector2Int.zero;
+            return _boundaryHandler.ClampToValidGrid(pos);
+        }
+        
+        public GridBoundaryHandler GetBoundaryHandler() => _boundaryHandler;
 
         private void CleanupPersistentArrays() {
             if (_workingNodes.IsCreated) _workingNodes.Dispose();

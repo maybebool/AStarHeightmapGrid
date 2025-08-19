@@ -1558,13 +1558,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a7b64db30c3a8449487580742ee516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentModeType: 0
+  currentModeType: 1
   targetToFollow: {fileID: 2139410890}
   minRecalculationInterval: 0.5
   targetMoveThreshold: 2
   swarmMoveThreshold: 3
-  usePredictiveTargeting: 1
-  predictionTime: 1
   birdPrefab: {fileID: 273390498063459725, guid: 45627d335c362604cb4ed9fec42930b4,
     type: 3}
   numberOfBirds: 5

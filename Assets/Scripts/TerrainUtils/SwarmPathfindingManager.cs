@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using PathFinderDOTS.Services;
-using TerrainUtils.Pathfinding;
 using TMPro;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
